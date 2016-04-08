@@ -10,8 +10,8 @@
 # 2. Set $JAVA_HOME (relate to alternatives config).
 
 # variables
-installJDK={$1:-1.6.0_45}
-priority={$2:-`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`}
+installJDK=${${1:-1.6.0_45}}
+priority=${${2:-`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`}}
 
 if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\nPermission Denied, Root user only.\nHint: sudo"; exit 0; fi
 echo "installJDK=[${installJDK}]"
