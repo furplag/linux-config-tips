@@ -14,8 +14,8 @@ installJDK={$1:-1.6.0_45}
 priority={$2:-`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`}
 
 if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\nPermission Denied, Root user only.\nHint: sudo"; exit 0; fi
-echo "[${installJDK}]"
-echo "[${priority}]"
+echo "installJDK=[${installJDK}]"
+echo "priority=[${priority}]"
 exit
 alternatives --remove java /usr/java/jdk$installJDK/bin/java >/dev/null 2>&1
 alternatives --install /usr/bin/java java /usr/java/jdk$installJDK/bin/java $priority \
