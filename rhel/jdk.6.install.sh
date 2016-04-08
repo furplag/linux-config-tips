@@ -35,10 +35,9 @@ if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
   echo -e "    ${conflictPackage} already installed."
 fi
 
-[ ! $installJDK = $conflictJDK ] && \
-  echo -e "\n  # Detect installed package detail.\n"
-
 if [ $conflictPackage ]; then
+  [ ! $installJDK = $conflictJDK ] && \
+    echo -e "\n  # Detect installed package detail.\n"
   if [ $installJDK = $conflictJDK ]; then
     resourceURL=
   elif [ $installVer -eq $conflictVer ]; then
