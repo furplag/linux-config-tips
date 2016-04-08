@@ -10,13 +10,30 @@
 # 2. Set $JAVA_HOME (relate to alternatives config).
 
 # variables
-installJDK=${${1:-1.6.0_45}}
-priority=${${2:-`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`}}
+installJDK=${1:-1.6.0_45}
+priority=${2:-`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`}
 
-if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\nPermission Denied, Root user only.\nHint: sudo"; exit 0; fi
-echo "installJDK=[${installJDK}]"
-echo "priority=[${priority}]"
+  if [ "${installDir:-$(rpm -qs jdk | grep -e "bin\/java$" | sed -e "s/^.*\s//")}" ]; then
+    echo "Java installed in ${installDir}."
+  else
+    echo "Install JDK first."
+  fi
 exit
+
+echo -e "\n  # Setting up \"alternatives\" for \"java\".\n"
+"${conflictPackage=$(rpm -qa jdk | grep x64)}"
+if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\nHint: sudo ${0} \"${installJDK}\" \"${priority}\""; exit 0; fi
+if [ ! -e /usr/java/jdk$installJDK/bin/java ]; then
+  echo -e "\/usr\/java\/jdk${installJDK}/bin/java not exist."
+  if [ "`which java 2>/dev/null`" ]; then
+    echo 
+  if [ "${installDir:-$(rpm -qs jdk | grep -e "bin\/java$" | sed -e "s/^.*\s//")}" ]; then
+    echo "Java installed in ${installDir}."
+  else
+    echo "Install JDK first."
+  fi
+fi
+
 alternatives --remove java /usr/java/jdk$installJDK/bin/java >/dev/null 2>&1
 alternatives --install /usr/bin/java java /usr/java/jdk$installJDK/bin/java $priority \
  --slave /usr/bin/appletviewer appletviewer /usr/java/jdk$installJDK/bin/appletviewer \
