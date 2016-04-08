@@ -1,6 +1,6 @@
 #!/bin/sh
 ###
-# oraclejdk.6.install.sh
+# jdk.6.install.sh
 # https://github.com/furplag/linux-config-tips
 # Copyright 2016 furplag
 # Licensed under MIT (https://github.com/furplag/linux-config-tips/blob/master/LICENSE)
