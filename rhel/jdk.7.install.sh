@@ -32,8 +32,8 @@ if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
   if [ 6 -gt $conflictVer ]; then
     echo "    Ah, we have encountered Prehistoric JDK now !\n"
   elif [ $installVer -gt $conflictVer ]; then
-    echo "    previous version of JDK ${conflictVer}.u${conflictUVer} has installed."
-  elif [ $installJDK -gt $conflictJDK ]; then
+    echo "    previous version of JDK ${conflictVer}u${conflictUVer} has installed."
+  elif [ $installJDK = $conflictJDK ]; then
     echo "    JDK ${conflictVer}u${conflictUVer} already installed."
   else
     echo "    newer version of JDK ${conflictVer}u${conflictUVer} has installed."
@@ -61,14 +61,14 @@ elif [ -e /usr/java/jdk$installJDK ]; then
   resourceURL=
 fi
 
-if [ ! -e /tmp/$resource ] && [ "${resourceURL}" ]; then
-  echo -e "\n  # Download Oracle JDK ${installVer}.\n" && \
-    wget $resourceURL \
-      --no-check-certificate \
-      --no-cookies \
-      --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-      -qNO /tmp/$resource
-  if [ -e /tmp/$resource ] && [ `echo $resource | grep -e -v "rpm$" | wc -l` -gt 0 ]; then
+if [ "${resource}" ] && [ "${resourceURL}" ]; then
+  echo -e "\n  # Download Oracle JDK ${installVer}.\n"
+  wget $resourceURL \
+    --no-check-certificate \
+    --no-cookies \
+    --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+    -NO /tmp/$resource
+  if [ -e /tmp/$resource ] && [ `echo $resource | grep -v -e "\.rpm$" | wc -l` -gt 0 ]; then
     echo "    unpacking ${resource} ..."
     tar zxf /tmp/$resource -C /tmp
     installSource="jdk${installJDK}"
@@ -119,7 +119,7 @@ echo -e "\n  # Cleanup ...\n" && \
   tar zxf /tmp/stealth.jdk.tar.gz -C /usr/java --strip=2 && \
   rm -rf /tmp/stealth.jdk.tar.gz
 
-if [ -e /usr/java/jdk$installJDK ] && \
+[ -e /usr/java/jdk$installJDK ] && \
   echo -e "\n# Now complete to setting JDK ${installVer}u${installUVer}.\n" && \
   java -version
   [ "${JAVA_HOME}" ] && echo -e "JAVA_HOME:${JAVA_HOME}"
