@@ -35,7 +35,7 @@ if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
   echo -e "    ${conflictPackage} already installed."
 fi
 
-[ $installJDK != $conflictJDK ] && \
+[ ! $installJDK = $conflictJDK ] && \
   echo -e "\n  # Detect installed package detail.\n"
 
 if [ $conflictPackage ]; then
