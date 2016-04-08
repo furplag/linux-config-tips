@@ -13,26 +13,10 @@
 installJDK=${1:-1.6.0_45}
 priority=${2:-`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`}
 
-  if [ "${installDir:-$(rpm -qs jdk | grep -e "bin\/java$" | sed -e "s/^.*\s//")}" ]; then
-    echo "Java installed in ${installDir}."
-  else
-    echo "Install JDK first."
-  fi
-exit
-
 echo -e "\n  # Setting up \"alternatives\" for \"java\".\n"
 "${conflictPackage=$(rpm -qa jdk | grep x64)}"
 if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\nHint: sudo ${0} \"${installJDK}\" \"${priority}\""; exit 0; fi
-if [ ! -e /usr/java/jdk$installJDK/bin/java ]; then
-  echo -e "\/usr\/java\/jdk${installJDK}/bin/java not exist."
-  if [ "`which java 2>/dev/null`" ]; then
-    echo 
-  if [ "${installDir:-$(rpm -qs jdk | grep -e "bin\/java$" | sed -e "s/^.*\s//")}" ]; then
-    echo "Java installed in ${installDir}."
-  else
-    echo "Install JDK first."
-  fi
-fi
+if [ ! -e /usr/java/jdk$installJDK/bin/java ]; then echo "Install JDK first."; exit 0; fi
 
 alternatives --remove java /usr/java/jdk$installJDK/bin/java >/dev/null 2>&1
 alternatives --install /usr/bin/java java /usr/java/jdk$installJDK/bin/java $priority \
@@ -76,11 +60,3 @@ alternatives --install /usr/bin/java java /usr/java/jdk$installJDK/bin/java $pri
  --slave /usr/bin/servertool servertool /usr/java/jdk$installJDK/jre/bin/servertool \
  --slave /usr/bin/tnameserv tnameserv /usr/java/jdk$installJDK/jre/bin/tnameserv \
  --slave /usr/bin/unpack200 unpack200 /usr/java/jdk$installJDK/jre/bin/unpack200
-
-[ ! -e /etc/profile.d/java.sh ] && \
-cat <<_EOT_ > /etc/profile.d/java.sh
-# Set Environment with alternatives for Java VM.
-export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
-_EOT_
-
-#alternatives --set java /usr/java/jdk$installJDK/bin/java && source /etc/profile
