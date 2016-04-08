@@ -66,7 +66,7 @@ if [ ! -e /tmp/$resource ] && [ "${resourceURL}" ]; then
       --no-check-certificate \
       --no-cookies \
       --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-      -qON /tmp/$resource
+      -qNO /tmp/$resource
   if [ -e /tmp/$resource ] && [ `echo $resource | grep -e "bin$"` ]; then
     echo "    unpacking ${resource} ..." && \
     chmod +x /tmp/$resource
