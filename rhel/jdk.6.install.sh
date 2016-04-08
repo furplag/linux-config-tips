@@ -20,9 +20,9 @@ installJDK=1.$installVer.0_$installUVer
 installRoot=/usr/java
 priority=`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`
 
-if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\nPermission Denied, Root user only.\nHint: sudo"; exit 0; fi
+if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\nHint: sudo ${0}"; exit 0; fi
 
-echo -e "Oracle JDK ${installVer}u${installUVer} install with alternatives.\n"
+echo -e "Oracle JDK ${installVer}u${installUVer} install with \"alternatives java\".\n"
 
 echo -e "\n  # Checking installed package named \"jdk\".\n"
 if [ "${conflictPackage=$(rpm -qa jdk | grep x64)}" ]; then
@@ -66,7 +66,7 @@ if [ ! -e /tmp/$resource ] && [ "${resourceURL}" ]; then
       --no-check-certificate \
       --no-cookies \
       --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-      -O /tmp/$resource
+      -qON /tmp/$resource
   if [ -e /tmp/$resource ] && [ `echo $resource | grep -e "bin$"` ]; then
     echo "    unpacking ${resource} ..." && \
     chmod +x /tmp/$resource
@@ -98,15 +98,14 @@ if [ "${installSource}" ] && [ -e /tmp/$installSource ]; then
 fi
 
 if [ -e /usr/java/jdk$installJDK/bin/java ]; then
-  echo "  # Setting up \"alternatives\" for \"java\"."
-  wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.6.alternatives.sh && \
+  wget -qN https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.6.alternatives.sh && \
     chmod +x jdk.6.alternatives.sh && \
     ./jdk.6.alternatives.sh "${installJDK}"
   rm -f jdk.6.alternatives.sh
 fi
 
 [ ! -e /etc/profile.d/java.sh ] && \
-echo -e "    Set Environment \$JAVA_HOME (relate to alternatives config)."
+echo -e "\n  # Set Environment \$JAVA_HOME (relate to alternatives config).\n"
 cat <<_EOT_ > /etc/profile.d/java.sh
 # Set Environment with alternatives for Java VM.
 export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
