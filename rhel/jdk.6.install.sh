@@ -101,7 +101,7 @@ if [ -e /usr/java/jdk$installJDK ] && [ `/usr/java/jdk$installJDK/bin/java -vers
   echo "  # Setting up \"alternatives\" for \"java\"."
   wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.6.alternatives.sh && \
     chmod +x jdk.6.alternatives.sh && \
-    .jdk.6.alternatives.sh $installJDK
+    ./jdk.6.alternatives.sh $installJDK
   rm -f jdk.6.alternatives.sh
 fi
 
