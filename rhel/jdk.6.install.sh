@@ -74,7 +74,7 @@ if [ ! -e /tmp/$resource ] && [ "${resourceURL}" ]; then
       installSource=`unzip -l /tmp/$resource -x sun-javadb* 2>/dev/null | grep rpm | grep -v -e "${resource}$" | sed -e "s/.*\s//"`
       unzip -o /tmp/$resource -d /tmp -x sun-javadb* >/dev/null 2>&1
     else
-      /tmp/$resource -x
+      /tmp/$resource -x >/dev/null 2>&1
       installSource="jdk${installJDK}"
       if [ -e "${installSource}" ]; then
         mv $installSource /tmp
