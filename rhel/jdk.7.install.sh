@@ -28,13 +28,21 @@ echo -e "\n  # Checking installed package named \"jdk\".\n"
 if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
   conflictJDK=`echo $conflictPackage | cut -d "-" -f 2`
   conflictVer=`echo $conflictJDK | cut -d "." -f 2`
-  conflictUVer=`echo $conflictVer | cut -d "_" -f 2`
-  if [ 6 -gt $conflictVer ]; then
+  conflictUVer=`echo $conflictJDK | cut -d "_" -f 2`
+  if [ $installJDK = $conflictJDK ]; then
+    echo "    JDK ${conflictVer}u${conflictUVer} already installed."
+  elif [ 6 -gt $conflictVer ]; then
     echo "    Ah, we have encountered Prehistoric JDK now !\n"
   elif [ $installVer -gt $conflictVer ]; then
     echo "    previous version of JDK ${conflictVer}u${conflictUVer} has installed."
-  elif [ $installJDK = $conflictJDK ]; then
-    echo "    JDK ${conflictVer}u${conflictUVer} already installed."
+  elif [ $installVer -lt $conflictVer ]; then
+    echo "    newer version of JDK ${conflictVer}u${conflictUVer} has installed."
+  elif [ $installVer -eq $conflictVer ]; then
+    if [ $installUVer -gt $conflictUVer ]; then
+      echo "    previous version of JDK ${conflictVer}u${conflictUVer} has installed."
+    else
+      echo "    newer version of JDK ${conflictVer}u${conflictUVer} has installed."
+    fi
   else
     echo "    newer version of JDK ${conflictVer}u${conflictUVer} has installed."
   fi
@@ -47,6 +55,7 @@ if [ $conflictPackage ]; then
     if [ $installUVer -gt $conflictUVer ]; then
       echo "    update JDK ${conflictVer}u${conflictUVer} to JDK ${installVer}u${installUVer}."
     else
+      echo "    does not install JDK ${installVer}u${installUVer}."
       resourceURL=
     fi
   elif [ $installVer -gt $conflictVer ]; then
@@ -67,7 +76,7 @@ if [ "${resource}" ] && [ "${resourceURL}" ]; then
     --no-check-certificate \
     --no-cookies \
     --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-    -NO /tmp/$resource
+    -qNO /tmp/$resource
   if [ -e /tmp/$resource ] && [ `echo $resource | grep -v -e "\.rpm$" | wc -l` -gt 0 ]; then
     echo "    unpacking ${resource} ..."
     tar zxf /tmp/$resource -C /tmp
@@ -87,43 +96,55 @@ if [ "${installSource}" ] && [ -e /tmp/$installSource ]; then
   fi
 fi
 
-if [ -e /usr/java/jdk$installJDK/bin/java ]; then
+if [ -e /usr/java/jdk$installJDK/bin/java ] || \
+   [ -e /usr/java/jdk$conflictJDK/bin/java ]; then
   wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.$installVer.alternatives.sh \
     -qNO /tmp/jdk.$installVer.alternatives.sh && \
-    chmod +x /tmp/jdk.$installVer.alternatives.sh && \
+    chmod +x /tmp/jdk.$installVer.alternatives.sh
+  if [ -e /usr/java/jdk$installJDK/bin/java ]; then
     /tmp/jdk.$installVer.alternatives.sh "${installJDK}" && \
-    alternatived=true
-elif [ -e /usr/java/jdk$conflictJDK/bin/java ]; then
-  wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.$installVer.alternatives.sh \
-    -qNO /tmp/jdk.$installVer.alternatives.sh && \
-    chmod +x /tmp/jdk.$installVer.alternatives.sh && \
+    alternatives --set java /usr/java/jdk$installJDK/bin/java
+  else
     /tmp/jdk.$installVer.alternatives.sh "${conflictJDK}" && \
-    alternatived=true
-fi
-
-if [ "${alternatived}" ]; then
+    alternatives --set java /usr/java/jdk$conflictJDK/bin/java
+  fi
   [ ! -e /etc/profile.d/java.sh ] && \
   echo -e "\n  # Set Environment \$JAVA_HOME (relate to alternatives config).\n"
-cat <<_EOT_ > /etc/profile.d/java.sh
+  cat <<_EOT_ > /etc/profile.d/java.sh
 # Set Environment with alternatives for Java VM.
 export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
 _EOT_
-  alternatives --set java /usr/java/jdk$installJDK/bin/java && source /etc/profile
+  [ -e /etc/profile.d/java.sh ] && \
+    source /etc/profile.d/java.sh
 fi
 
-[ "${installSource}" ] && \
-echo -e "\n  # Cleanup ...\n" && \
-  rm -rf /tmp/$resource /tmp/$installSource /tmp/jdk.$installVer.alternatives.sh >/dev/null 2>&1
+echo -e "\n  # Cleanup ...\n"
+rm -rf /tmp/$resource /tmp/$installSource /tmp/jdk.$installVer.alternatives.sh >/dev/null 2>&1
+
+if [ "${conflictPackage}" ] && \
+   [ $installVer -eq $conflictVer ] && \
+   [ $installUVer -gt $conflictUVer ]; then
+  alternatives --remove java /usr/java/jdk$conflictJDK/bin/java
+fi
 
 [ -e /tmp/stealth.jdk.tar.gz ] && \
   tar zxf /tmp/stealth.jdk.tar.gz -C /usr/java --strip=2 && \
   rm -rf /tmp/stealth.jdk.tar.gz
 
-[ -e /usr/java/jdk$installJDK ] && \
-  echo -e "\n# Now complete to setting JDK ${installVer}u${installUVer}.\n" && \
+if [ -e /usr/java/jdk$installJDK ]; then
+  echo -e "\n# Now complete to setting JDK ${installVer}u${installUVer}.\n"
   java -version
   [ "${JAVA_HOME}" ] && echo -e "JAVA_HOME:${JAVA_HOME}"
-if [ "${alternatived}" ]; then
-  echo -e "alternatives java: `alternatives --display java | grep -e "^\/usr\/java/jdk${installJDK}"`\n"
-  echo -e "usage:\n# alternatives --config java && source /etc/profile\n"
+elif [ -e /usr/java/jdk$conflictJDK ]; then
+  echo -e "\n# Now complete to setting JDK ${conflictVer}u${conflictUVer} (not changed).\n"
+  java -version
+  [ "${JAVA_HOME}" ] && echo -e "JAVA_HOME:${JAVA_HOME}"
+else
+  echo -e "\n# Install failed."
+  [ `java -version 2>/dev/null | wc -l` -gt 0 ] && java -version
+  [ "${JAVA_HOME}" ] && echo -e "JAVA_HOME:${JAVA_HOME}"
 fi
+[ -e /etc/alternatives/java ] && \
+  echo -e "alternatives java:\n`alternatives --display java | grep -e "^\/usr\/java/.*\/bin\/java"`\n"
+[ -e /etc/profile.d/java.sh ] && \
+  echo -e "usage:\n# alternatives --config java && source /etc/profile\n"
