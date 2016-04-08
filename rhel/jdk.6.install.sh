@@ -66,11 +66,11 @@ if [ ! -e /tmp/$resource ] && [ "${resourceURL}" ]; then
       --no-check-certificate \
       --no-cookies \
       --header "Cookie: oraclelicense=accept-securebackup-cookie" \
-      -qO /tmp/$resource
+      -O /tmp/$resource
   if [ -e /tmp/$resource ] && [ `echo $resource | grep -e "bin$"` ]; then
     echo "    unpacking ${resource} ..." && \
     chmod +x /tmp/$resource
-    if [ `echo $resource | grep -rpm` ]; then
+    if [ `echo $resource | grep -e "\-rpm"` ]; then
       installSource=`unzip -l /tmp/$resource -x sun-javadb* 2>/dev/null | grep rpm | grep -v -e "${resource}$" | sed -e "s/.*\s//"`
       unzip -o /tmp/$resource -d /tmp -x sun-javadb* >/dev/null 2>&1
     else
@@ -97,11 +97,11 @@ if [ "${installSource}" ] && [ -e /tmp/$installSource ]; then
   fi
 fi
 
-if [ -e /usr/java/jdk$installJDK ] && [ `/usr/java/jdk$installJDK/bin/java -version 2>/dev/null | wc -l` -gt 0 ]; then
+if [ -e /usr/java/jdk$installJDK/bin/java ]; then
   echo "  # Setting up \"alternatives\" for \"java\"."
   wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.6.alternatives.sh && \
     chmod +x jdk.6.alternatives.sh && \
-    ./jdk.6.alternatives.sh $installJDK
+    ./jdk.6.alternatives.sh "${installJDK}"
   rm -f jdk.6.alternatives.sh
 fi
 
