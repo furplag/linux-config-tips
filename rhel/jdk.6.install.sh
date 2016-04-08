@@ -98,10 +98,10 @@ if [ "${installSource}" ] && [ -e /tmp/$installSource ]; then
 fi
 
 if [ -e /usr/java/jdk$installJDK/bin/java ]; then
-  wget -qN https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.6.alternatives.sh && \
-    chmod +x jdk.6.alternatives.sh && \
-    ./jdk.6.alternatives.sh "${installJDK}"
-  rm -f jdk.6.alternatives.sh
+  wget -qN https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.$installVer.alternatives.sh && \
+    chmod +x jdk.$installVer.alternatives.sh && \
+    ./jdk.$installVer.alternatives.sh "${installJDK}"
+  rm -f jdk.$installVer.alternatives.sh
 fi
 
 [ ! -e /etc/profile.d/java.sh ] && \
