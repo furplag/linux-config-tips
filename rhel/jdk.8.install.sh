@@ -48,8 +48,6 @@ if [ "${conflictPackage=$(rpm -qa jdk1.${installVer}}* | grep x86_64)}" ]; then
   fi
 fi
 
-exit
-
 if [ $conflictPackage ]; then
   if [ $installJDK = $conflictJDK ]; then
     resourceURL=
