@@ -99,7 +99,7 @@ fi
 
 if [ -e /usr/java/jdk$installJDK/bin/java ] || \
    [ -e /usr/java/jdk$conflictJDK/bin/java ]; then
-  wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jdk.$installVer.alternatives.sh \
+  wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.$installVer.alternatives.sh \
     -qNO /tmp/jdk.$installVer.alternatives.sh && \
     chmod +x /tmp/jdk.$installVer.alternatives.sh
   if [ -e /usr/java/jdk$installJDK/bin/java ]; then
