@@ -36,35 +36,11 @@ localectl set-locale LANG=[language_Country.Charset]
 # change default Timezone.
 datetimectl set-timezone [zoneinfo]
 ```
-===
-
-> ### Notes only on my own
-```bash
-yum install -y firefox gedit open-vm-tools
-
-```
+=
 
 
-And Optional,
-```bash
-# yum groupinstall -y "Fonts" && \
-  yum install -y firefox gedit
+> ### Notes: only for my own
 
-# In case to build Virtual-Machine,
-  yum install -y open-vm-tools
-```
-
-Locale
-```bash
-# localectl set-locale LANG=[language_Country.Charset]
-```
-
-DateTime
-```bash
-# datetimectl set-timezone [zoneinfo]
-```
-
-Notes: only for my own
 ```bash
 # Install external repositories
 yum install -y epel-release \
