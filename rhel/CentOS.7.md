@@ -78,7 +78,7 @@ yum install -y epel-release \
  cp -p /etc/yum.repos.d/nginx.repo /etc/yum.repos.d/nginx-mainline.repo && \
  sed -i -e 's/\[nginx\]/\[nginx-mainline\]/' /etc/yum.repos.d/nginx-mainline.repo && \
  sed -i -e 's/\/packages\//\/packages\/mainline\//' /etc/yum.repos.d/nginx-mainline.repo && \
- yum install -y file-roller firefox gedit git wget && \
+ yum install -y yum-utils file-roller firefox gedit git wget && \
  yum update -y --enablerepo=city-fan.org,epel,ius
 ```
 
@@ -91,10 +91,3 @@ General settings
 + Set "Displays".
 + Set "Files preferences". 
 + Set "gEdit preferences".
-
-
-
-
-# Install packages
-yum install -y yum-utils 
-```
