@@ -24,8 +24,8 @@ if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\n
 
 echo -e "Oracle JDK ${installVer}u${installUVer} install with \"alternatives java\".\n"
 
-echo -e "\n  # Checking installed package named \"jdk\".\n"
-if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
+echo -e "\n  # Checking installed package named \"jdk1.8*\".\n"
+if [ "${conflictPackage=$(rpm -qa jdk1.8* | grep x86_64)}" ]; then
   conflictJDK=`echo $conflictPackage | cut -d "-" -f 2`
   conflictVer=`echo $conflictJDK | cut -d "." -f 2`
   conflictUVer=`echo $conflictJDK | cut -d "_" -f 2`
@@ -47,6 +47,8 @@ if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
     echo "    newer version of JDK ${conflictVer}u${conflictUVer} has installed."
   fi
 fi
+
+exit
 
 if [ $conflictPackage ]; then
   if [ $installJDK = $conflictJDK ]; then
