@@ -23,7 +23,7 @@ systemctl set-default graphical.target
 
 > ### And also, if you building Virtual Machine
 ```bash
-yum install -y open-vm-tools
+yum install -y open-vm-tools open-vm-tools-desktop
 ```
 
 #### and Optional
