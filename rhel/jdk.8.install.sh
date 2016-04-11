@@ -59,7 +59,7 @@ if [ $conflictPackage ]; then
       resourceURL=
     fi
   elif [ $installVer -gt $conflictVer ]; then
-    echo "    escaping prehistoric version of JDK ..."
+    echo "    escaping previous version of JDK ..."
     tar cfz /tmp/stealth.jdk.tar.gz /usr/java/jdk1.[0-$conflictVer]* >/dev/null 2>&1
   else
     resourceURL=`echo $resourceURL | sed -e "s/rpm/tar.gz/"`
