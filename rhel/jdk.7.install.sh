@@ -124,7 +124,7 @@ rm -rf /tmp/$resource /tmp/$installSource /tmp/jdk.$installVer.alternatives.sh >
 if [ "${conflictPackage}" ] && \
    [ $installVer -eq $conflictVer ] && \
    [ $installUVer -gt $conflictUVer ]; then
-  alternatives --remove java /usr/java/jdk$conflictJDK/bin/java
+  alternatives --remove java /usr/java/jdk$conflictJDK/bin/java >/dev/null 2>&1
 fi
 
 [ -e /tmp/stealth.jdk.tar.gz ] && \
