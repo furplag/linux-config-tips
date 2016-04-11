@@ -24,8 +24,8 @@ if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\n
 
 echo -e "Oracle JDK ${installVer}u${installUVer} install with \"alternatives java\".\n"
 
-echo -e "\n  # Checking installed package named \"jdk1.8*\".\n"
-if [ "${conflictPackage=$(rpm -qa jdk1.8* | grep x86_64)}" ]; then
+echo -e "\n  # Checking installed package named \"jdk1.${installVer}*\".\n"
+if [ "${conflictPackage=$(rpm -qa jdk1.${installVer}}* | grep x86_64)}" ]; then
   conflictJDK=`echo $conflictPackage | cut -d "-" -f 2`
   conflictVer=`echo $conflictJDK | cut -d "." -f 2`
   conflictUVer=`echo $conflictJDK | cut -d "_" -f 2`
@@ -91,7 +91,8 @@ fi
 if [ "${installSource}" ] && [ -e /tmp/$installSource ]; then
   echo -e "\n  # Install JDK package.\n"
   if [ `echo $installSource | grep -e "rpm$" | wc -l` -gt 0 ]; then
-    yum install -y /tmp/$installSource >/dev/null 2>&1
+    yum install -y /tmp/$installSource >/dev/null 2>&1 && \
+    [ $conflictJDK ] && yum remove -y jdk$conflictJDK.x86_64 >/dev/null 2>&1
   else
     [ ! -e /usr/java ] && mkdir /usr/java
     mv /tmp/$installSource /usr/java/$installSource
@@ -126,7 +127,7 @@ rm -rf /tmp/$resource /tmp/$installSource /tmp/jdk.$installVer.alternatives.sh >
 if [ "${conflictPackage}" ] && \
    [ $installVer -eq $conflictVer ] && \
    [ $installUVer -gt $conflictUVer ]; then
-  alternatives --remove java /usr/java/jdk$conflictJDK/bin/java
+  alternatives --remove java /usr/java/jdk$conflictJDK/bin/java >/dev/null 2>&1
 fi
 
 [ -e /tmp/stealth.jdk.tar.gz ] && \
