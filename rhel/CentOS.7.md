@@ -12,16 +12,14 @@ yum groupinstall -y "X Window System" && \
 ```
 
 then
-```bash
-startx
-```
-or
+
 ```bash
 # Change runlevel to "graphical". 
 systemctl set-default graphical.target
 ```
 
 > ### And also, if you building Virtual Machine
+
 ```bash
 yum install -y open-vm-tools open-vm-tools-desktop
 ```
