@@ -112,6 +112,8 @@ if [ -e /usr/java/jdk$installJDK/bin/java ] || \
   [ ! -e /etc/profile.d/java.sh ] && \
   echo -e "\n  # Set Environment \$JAVA_HOME (relate to alternatives config).\n"
   cat <<_EOT_ > /etc/profile.d/java.sh
+#/etc/profile.d/java.sh
+
 # Set Environment with alternatives for Java VM.
 export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
 _EOT_
