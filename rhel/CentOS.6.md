@@ -1,28 +1,20 @@
 # CentOS 6
-
 ## Using "Desktop" GUI after minimal installed.
-
 Install required packages for Using Desktop.
 ```bash
 yum groupinstall -y "Base" "Desktop" && \
  yum install -y nautilus-open-terminal
-```
-
-then
-
+```  
+Change runlevel to "graphical".
 ```bash
 # Change runlevel to "graphical". 
 sed -i -e 's/id:[0-6]/id:5/' /etc/inittab
-```
 
-> ### And also, if you building Virtual Machine
-
-```bash
+# And also, if you building Virtual Machine.
 yum install -y open-vm-tools open-vm-tools-desktop
 ```
-
-#### and Optional
-
+then "`shutdown -r now`".
+and optional,
 ```bash
 # change default Locale.
 sed -i -e 's/LANG=*/LANG=[language_Country.Charset]/' /etc/sysconfig/i18n
@@ -32,11 +24,9 @@ localectl set-locale LANG=[language_Country.Charset]
 sed -i -e 's/^ZONE/ZONE=[Area]\/[Location]\n# ZONE/' /etc/sysconfig/clock && \
  /usr/sbin/tzdata-update
 ```
-=
 
-
-> ### Notes: only for my own
-
+---
+### Notes: only for my own
 ```bash
 # Install external repositories
 yum install -y epel-release \
