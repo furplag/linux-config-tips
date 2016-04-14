@@ -12,15 +12,20 @@
 # 4. Set $JAVA_HOME (relate to alternatives config).
 
 # variables
-resourceURL="http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin"
+resourceURL=${1:-"http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin"}
 resource=`echo $resourceURL | sed -e "s/^.*\///"`
 installVer=`echo $resource | cut -d "-" -f 2 | cut -d "u" -f 1`
 installUVer=`echo $resource | cut -d "-" -f 2 | cut -d "u" -f 2`
 installJDK=1.$installVer.0_$installUVer
-installRoot=/usr/java
 priority=`echo $installJDK | sed -e "s/[\.]//g" | sed -e "s/_/0/"`
 
 if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\nHint: sudo ${0}"; exit 0; fi
+
+wget -q --spider $resourceURL \
+ --no-check-certificate \
+ --no-cookies \
+ --header "Cookie: oraclelicense=accept-securebackup-cookie"
+if [ ! $? ]; then echo -e "${resourceURL} : 404 not found."; exit 0; fi
 
 echo -e "Oracle JDK ${installVer}u${installUVer} install with \"alternatives java\".\n"
 
