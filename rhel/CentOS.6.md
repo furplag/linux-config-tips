@@ -1,4 +1,5 @@
 # CentOS 6
+###### CentOS release 6.7 (Final)
 ## Using "Desktop" GUI after minimal installed.
 Install required packages for Using Desktop.
 ```bash
@@ -26,7 +27,7 @@ sed -i -e 's/^ZONE/ZONE=[Area]\/[Location]\n# ZONE/' /etc/sysconfig/clock && \
 ```
 
 ---
-### Notes: only for my own
+###### Notes: only for my own
 ```bash
 # Install external repositories
 yum install -y epel-release \
