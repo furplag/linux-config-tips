@@ -19,7 +19,7 @@
 
 ----
 
-#### Downloading Oracle JDK only use command-line.
+### Downloading Oracle JDK only use command-line.
 ```bash
 wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin \
  --no-check-certificate \
@@ -27,7 +27,7 @@ wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm
  --header "Cookie: oraclelicense=accept-securebackup-cookie"
 ```
 
-#### Install Oracle JDK.
+### Install Oracle JDK.
 ```bash
 # To executable "jdk-6u45-linux-x64-rpm.bin".
 chmod +x jdk-6u45-linux-x64-rpm.bin
@@ -41,7 +41,7 @@ Then install.
 yum install -y jdk-6u45-linux-amd64.rpm
 ```
 
-#### Install "alternatives" for JDK.
+### Install "alternatives" for JDK.
 ```bash
 alternatives --install /usr/bin/java java /usr/java/jdk1.6.0_45/bin/java 160045 \
 --slave /usr/bin/appletviewer appletviewer /usr/java/jdk1.6.0_45/bin/appletviewer \
@@ -86,7 +86,7 @@ alternatives --install /usr/bin/java java /usr/java/jdk1.6.0_45/bin/java 160045 
 --slave /usr/bin/unpack200 unpack200 /usr/java/jdk1.6.0_45/jre/bin/unpack200
 ```
 
-#### Set Environment "$JAVA_HOME" for `java`.
+### Set Environment "$JAVA_HOME" for `java`.
 ```bash
 [ ! -e /etc/proofile.d/java.sh ] && \
  cat <<_EOT_ > /etc/profile.d/java.sh
@@ -114,4 +114,41 @@ alternatives --set java /usr/java/jdk1.6.0_45/bin/java && source /etc/profile
 
 # or select manually.
 alternatives --config java && source /etc/profile
+
+# Test
+alternatives --display java | grep -e "^\/usr\/java/.*\/bin\/java" \
+ | sed -e "s@`readlink /etc/alternatives/java`.*@\0 [selected]@" && \
+java -version && \
+echo -e "\$JAVA_HOME=${JAVA_HOME}"
+```
+---
+
+## Throuble shooting
+
+### error: Permission denied.
+**You need to be root to perform this command.** hint:`sudo`.
+
+### yum (or rpm) says "[upper version of jdk] already installed".
+#### 1. Source install
+```bash
+wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64.bin \
+ --no-check-certificate \
+ --no-cookies - \
+ --header "Cookie: oraclelicense=accept-securebackup-cookie"
+```
+#### 2. Unpacking
+```bash
+chmod +x jdk-6u45-linux-x64.bin && \
+ jdk-6u45-linux-x64.bin -x && \
+ [ ! -e /usr/java ] && mkdir -p /usr/java && \
+ mv jdk1.6.0_45 /usr/java/.
+```
+and continuing [next](#install-alternatives-for-jdk).
+
+### Could install another version of JDK 6?
+modify value of $resourceURL in "[jdk.6.install.sh](jdk.6.install.sh)" (line:15)
+```shell
+wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.6.install.sh \
+ -qO /tmp/jdk.6.install.sh && \
+[TODO]
 ```
