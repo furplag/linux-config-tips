@@ -1,6 +1,11 @@
 # Install Oracle JDK 6 with alternatives
 ###### Oracle JDK 1.6.0_45
 
+1. [Downloading Oracle JDK only use command-line.](#Downloading Oracle JDK only use command-line)
+2. [Install Oracle JDK 6.](#Install Oracle JDK)
+3. [Install "alternatives" for JDK 6.](#Install \"alternatives\" for JDK)
+
+
 #### Downloading Oracle JDK only use command-line.
 ```bash
 wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin \
