@@ -1,10 +1,13 @@
 # Install Oracle JDK 6 with alternatives
 ###### Oracle JDK 1.6.0_45
 
-1. [Downloading Oracle JDK only use command-line.](#Downloading Oracle JDK only use command-line)
-2. [Install Oracle JDK 6.](#Install Oracle JDK)
-3. [Install "alternatives" for JDK 6.](#Install \"alternatives\" for JDK)
+### [Quick Start](#thats-it)
 
+1. [Downloading Oracle JDK only use command-line.](#downloading-oracle-jdk-only-use-command-line)
+2. [Install Oracle JDK 6.](#install-oracle-jdk)
+3. [Install "alternatives" for JDK 6.](#install-alternatives-for-jdk)
+4. [Set Environment with alternatives for Java VM.](#set-environment-java_home-for-java)
+5. [Usage](#usage)
 
 #### Downloading Oracle JDK only use command-line.
 ```bash
