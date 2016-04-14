@@ -1,7 +1,7 @@
 # Install Oracle JDK 6 with alternatives
 ###### Oracle JDK 1.6.0_45
 
-### [Quick Start](#thats-it)
+## Getting start
 
 1. [Downloading Oracle JDK only use command-line.](#downloading-oracle-jdk-only-use-command-line)
 
@@ -13,7 +13,11 @@
 
 5. [Usage](#usage)
 
-6.
+6. **[Rocket-start](thats-it)**
+
+7. [Throuble shooting](#throuble-shooting)
+
+----
 
 #### Downloading Oracle JDK only use command-line.
 ```bash
