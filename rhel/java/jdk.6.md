@@ -125,8 +125,11 @@ echo -e "\$JAVA_HOME=${JAVA_HOME}"
 
 ## Throuble shooting
 
-### error: Permission denied.
+### Error: Permission denied.
 **You need to be root to perform this command.** hint:`sudo`.
+
+### Error: wget: command not found.
+`yum install -y wget` or use `curl`.
 
 ### yum (or rpm) says "[upper version of jdk] already installed".
 #### 1. Source install
