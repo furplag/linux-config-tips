@@ -10,21 +10,32 @@ yum groupinstall -y "Base" "Desktop" && \
 ```bash
 # Change runlevel to "graphical". 
 sed -i -e 's/id:[0-6]/id:5/' /etc/inittab
-
-# And also, if you building Virtual Machine.
-yum install -y open-vm-tools open-vm-tools-desktop
 ```
+
+##### And also, if you building Virtual Machine.
+```bash
+yum install -y epel-release && \
+ sed -i -e 's/enabled=1/enabled=0/g' /etc/yum.repos.d/epel* && \
+yum install -y open-vm-tools open-vm-tools-desktop --enablerepo=epel
+```
+
 #### And optional,
 ```bash
 # change default Locale.
-sed -i -e 's/LANG=*/LANG=[language_Country.Charset]/' /etc/sysconfig/i18n
-localectl set-locale LANG=[language_Country.Charset]
+sed -i -e 's/^LANG=/LANG="[language_Country.Charset]"\n\n#LANG=/' /etc/sysconfig/i18n
 
 # change default Timezone.
-sed -i -e 's/^ZONE/ZONE=[Area]\/[Location]\n# ZONE/' /etc/sysconfig/clock && \
+sed -i -e 's/^ZONE=/ZONE="[Area]\/[Location]"\n#ZONE=/' /etc/sysconfig/clock && \
  /usr/sbin/tzdata-update
 ```
 then "`shutdown -r now`".
+
+### [That's it](https://git.io/vwqVh).
+```bash
+curl -fLs https://git.io/vmqay -o /tmp/quickstart.sh && \
+ chmod +x /tmp/quickstart.sh && \
+ /tmp/quickstart.sh
+```
 
 ---
 ###### Notes: only for my own
