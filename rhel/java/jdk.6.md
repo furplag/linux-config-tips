@@ -146,9 +146,6 @@ chmod +x jdk-6u45-linux-x64.bin && \
 and continuing [next](#install-alternatives-for-jdk).
 
 ### Could install another version of JDK 6?
-modify value of $resourceURL in "[jdk.6.install.sh](jdk.6.install.sh)" (line:15)
-```shell
-wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.6.install.sh \
- -qO /tmp/jdk.6.install.sh && \
-[TODO]
-```
+You should sign up Oracle single sign on.
+  1. download JDK 6 manually (with web browser).
+  2. And [set alternatives for JDK 6](jdk.6.alternatives.sh).
