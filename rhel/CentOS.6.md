@@ -32,9 +32,11 @@ then "`shutdown -r now`".
 
 ### [That's it](https://git.io/vwqVh).
 ```bash
-curl -fLs https://git.io/vmqay -o /tmp/quickstart.sh && \
- chmod +x /tmp/quickstart.sh && \
- /tmp/quickstart.sh
+curl -fLs https://git.io/vwqwK -o /tmp/quickstart.sh && \
+ chmod +x /tmp/quickstart.sh
+
+# The downloaded script has localized in Japanese situation.
+# should modify and then execute "/tmp/quickstart.sh".
 ```
 
 ---
