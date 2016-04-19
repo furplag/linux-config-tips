@@ -4,7 +4,7 @@
 ##### Install required packages for Using Desktop.
 ```bash
 yum groupinstall -y "Base" "Desktop" && \
- yum install -y nautilus-open-terminal
+ yum install -y yum-utils nautilus-open-terminal
 ```
 ##### Change runlevel to "graphical".
 ```bash
@@ -32,11 +32,9 @@ then "`shutdown -r now`".
 
 ### [That's it](https://git.io/vwqVh).
 ```bash
-curl -fLs https://git.io/vwqwK -o /tmp/quickstart.sh && \
- chmod +x /tmp/quickstart.sh
-
-# The downloaded script has localized in Japanese situation.
-# should modify and then execute "/tmp/quickstart.sh".
+curl -fLs https://git.io/vwOCy -o /tmp/quickstart.sh && \
+ chmod +x /tmp/quickstart.sh && \
+ /tmp/quickstart.sh
 ```
 
 ---
@@ -49,16 +47,22 @@ yum install -y epel-release \
  sed -i -e 's/enabled=1/enabled=0/g' /etc/yum.repos.d/city-fan.org.repo \
   /etc/yum.repos.d/epel* \
   /etc/yum.repos.d/ius* && \
- yum install -y yum-utils file-roller firefox gedit git wget && \
+ yum install -y file-roller firefox gedit git wget && \
  yum update -y --enablerepo=city-fan.org,epel,ius
+
+# Install open-vm-tools
+yum install -y open-vm-tools open-vm-tools-desktop --enablerepo=epel
 ```
 
-General settings
-+ Change SELinux "Permissive".
-+ Set "Screen Lock" off.
-+ Set "Purge Trush && Temporaries" on.
-+ Set "Language" and "Format".
-+ Set "Keyboard".
-+ Set "Displays".
-+ Set "Files preferences". 
-+ Set "gedit preferences".
+General settings after GUI login.
+```bash
+# General settings
+## SELinux
+sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+
+## Localize
+yum groupinstall -y "Fonts" "Japanese Support" && \
+if [ "${LANG}" != "ja_JP.UTF-8" ]; then
+  sed -i -e 's/^./#\0/' -e '1i\LANG="ja_JP.UTF-8"\n' /etc/sysconfig/i18n
+fi
+```
