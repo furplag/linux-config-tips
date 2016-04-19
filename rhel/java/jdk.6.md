@@ -23,7 +23,7 @@
 ```bash
 wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin \
  --no-check-certificate \
- --no-cookies - \
+ --no-cookies \
  --header "Cookie: oraclelicense=accept-securebackup-cookie"
 ```
 
@@ -136,7 +136,7 @@ echo -e "\$JAVA_HOME=${JAVA_HOME}"
 ```bash
 wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64.bin \
  --no-check-certificate \
- --no-cookies - \
+ --no-cookies \
  --header "Cookie: oraclelicense=accept-securebackup-cookie"
 ```
 #### 2. Unpacking
