@@ -13,7 +13,7 @@
 
 5. [Usage](#usage)
 
-6. **[Rocket-start](thats-it)**
+6. **[Quickstart](thats-it)**
 
 7. [Throuble shooting](#throuble-shooting)
 
@@ -146,7 +146,7 @@ chmod +x jdk-6u45-linux-x64.bin && \
  [ ! -e /usr/java ] && mkdir -p /usr/java && \
  mv jdk1.6.0_45 /usr/java/.
 ```
-and continuing [next](#install-alternatives-for-jdk).
+and continuing **[next](#install-alternatives-for-jdk)**.
 
 ### Could install another version of JDK 6?
 Need to sign in Oracle. Download JDK 6 manually (with web browser).
