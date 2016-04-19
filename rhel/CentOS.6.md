@@ -30,9 +30,10 @@ sed -i -e 's/^ZONE=/ZONE="[Area]\/[Location]"\n#ZONE=/' /etc/sysconfig/clock && 
 ```
 then "`shutdown -r now`".
 
-### [That's it](https://git.io/vwqVh).
+### [That's it](centos.6.quickstart.sh).
 ```bash
-curl -fLs https://git.io/vwOCy -o /tmp/quickstart.sh && \
+curl -fLs https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/centos.6.quickstart.sh \
+ -o /tmp/quickstart.sh && \
  chmod +x /tmp/quickstart.sh && \
  /tmp/quickstart.sh
 ```
