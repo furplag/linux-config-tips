@@ -13,7 +13,7 @@
 
 5. [Usage](#usage)
 
-6. **[Quickstart](thats-it)**
+6. **[Quickstart](#thats-it)**
 
 7. [Throuble shooting](#throuble-shooting)
 
