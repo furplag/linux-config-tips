@@ -102,8 +102,7 @@ _EOT_
 wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.6.install.sh \
  -qO /tmp/jdk.6.install.sh && \
  chmod +x /tmp/jdk.6.install.sh && \
- /tmp/jdk.6.install.sh && \
- rm -f /tmp/jdk.6.install.sh.sh
+ /tmp/jdk.6.install.sh
 ```
 ---
 
