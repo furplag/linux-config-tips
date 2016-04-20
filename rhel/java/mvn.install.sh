@@ -9,32 +9,49 @@
 # 
 
 # variables
-version=${1:-3.3.9}
-
-if [ ! $JAVA_HOME ]; then
-  echo -e "env \$JAVA_HOME undifined."
-  exit 1
-elif [ -e $JAVA_HOME/bin/java ]; then
-  echo -e "invalid path: \$JAVA_HOME=\"${JAVA_HOME}\", \"java\" not found."
-  exit 1
+javaVer=((java -version 2>&1) | grep -i version | cut -d '"' -f 2)
+if [ $javaVer ]; then
+  jdkVer=$javaVer | cut -d '.' -f 2
+elif [ $JAVA_HOME ]; then
+  javaVer=(($JAVA_HOME/bin/java -version 2>&1) | grep -i version | cut -d '"' -f 2)
+  jdkVer=$javaVer | cut -d '.' -f 2
 fi
 
-jdkVer=$(echo $JAVA_HOME | cut -d '.' -f 2)
-if [ $jdkVer -lt 7 ]; then
-  version=3.2.5
-fi
-
-curl -fLs https://www.apache.org/dist/maven/maven-3/$version/binaries/apache-maven-$version-bin.tar.gz \
- -o /tmp/apache-maven-$version-bin.tar.gz
-
-if [ -e /tmp/apache-maven-$version-bin.tar.gz ]; then
-  echo -e "source download failed."
+if [ ! $jdkVer ]; then
+  echo -e "\n  Java VM not difined, Install JDK first."
+  exit 1
+elif [ $((jdkVer)) -lt 5 ]; then
+  echo -e "\n  Ah, we have encountered Prehistoric JDK now !"
+  echo -e "\n  The Great Maven says, \"N E W E R\"."
   exit 1
 fi
-
-tar zxf /tmp/apache-maven-$version-bin.tar.gz -C /tmp
-
-[ ! -e /tmp/apache-maven-$version ] && echo -e "source download failed." && exit 1
 
 [ -e /usr/local/maven ] || mkdir -p /usr/local/maven
-mv /tmp/apache-maven-$version /usr/local/.
+for mavenVer in 3.2.5 3.3.9; do
+  if [ -e /usr/local/maven/apache-maven-$mavenVer ]; then continue; fi
+  echo -e "\n  Download Apache maven ${mavenVer} ..."
+  curl -fLs https://www.apache.org/dist/maven/maven-3/$mavenVer/binaries/apache-maven-$mavenVer-bin.tar.gz \
+   -o /tmp/apache-maven-$mavenVer-bin.tar.gz
+  [ -e /tmp/apache-maven-$mavenVer-bin.tar.gz ] && \
+   tar zxf /tmp/apache-maven-$mavenVer-bin.tar.gz -C /usr/local/maven
+  if [ ! -e /usr/local/maven/apache-maven-$mavenVer ]; then
+    echo "    maven-${mavenVer} install failed."
+    continue
+  fi
+  alternatives --remove mvn /usr/local/maven/apache-maven-$mavenVer >/dev/null 2>&1
+  alternatives --install /usr/local/bin/mvn mvn /usr/local/maven/apache-maven-$mavenVer/bin/mvn $(echo $mavenVer | sed -e 's/\./0/g') \
+   --slave /usr/local/bin/mvnDebug mvnDebug /usr/local/maven/apache-maven-$mavenVer/bin/mvnDrbug \
+   --slave /usr/local/bin/mvnyjp mvnyjp /usr/local/maven/apache-maven-$mavenVer/bin/mvnyjp
+  if [ $(((alternatives --display mvn) | grep $mavenVer/bin/mvn | wc -l)) -gt 0 ]; then
+    echo "    maven-${mavenVer} installed in \"/usr/local/maven\"."
+    [ -e /etc/profile.d/mvn.sh ] || cat << _EOT_ > /etc/profile.d/mvn.sh
+#/etc/profile.d/mvn.sh
+
+# Set Environment with alternatives for Apache Maven.
+[ $JAVA_HOME ] || exit 0
+export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
+_EOT_
+
+done
+
+
