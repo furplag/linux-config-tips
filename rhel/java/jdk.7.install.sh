@@ -32,7 +32,7 @@ if [ "${conflictPackage=$(rpm -qa jdk | grep x86_64)}" ]; then
   if [ $installJDK = $conflictJDK ]; then
     echo "    JDK ${conflictVer}u${conflictUVer} already installed."
   elif [ 6 -gt $conflictVer ]; then
-    echo "    Ah, we have encountered Prehistoric JDK now !\n"
+    echo -e "    Ah, we have encountered Prehistoric JDK now !\n"
   elif [ $installVer -gt $conflictVer ]; then
     echo "    previous version of JDK ${conflictVer}u${conflictUVer} has installed."
   elif [ $installVer -lt $conflictVer ]; then
