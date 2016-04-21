@@ -10,76 +10,102 @@
 # 3. Set "alternatives" for Maven.
 # 4. Set $M2, $M2_HOME (relate to $JAVA_HOME).
 
-if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "Permission Denied, Root user only.\nHint: sudo ${0}"; exit 0; fi
+# variables
+javaDir=${1:-/usr/java}
+mavenDir=${2:-/usr/maven}
 
-echo "\nInstall Apache Maven ..."
+echo -e "\nInstall Apache Maven"
+if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\n  Permission Denied, Root user only.\n  Solution: sudo ${0}"; exit 0; fi
 
-if [ $((java -version 2>&1) | grep -i version | wc -l) -gt 0 ]; then
-  javaVer=$((java -version 2>&1) | grep -i version | cut -d '"' -f 2)
-elif [ $((java -version 2>&1) | grep -i version | wc -l) -gt 0 ]; then
-  javaVer=$(($JAVA_HOME/bin/java -version 2>&1) | grep -i version | cut -d '"' -f 2)
+echo -e "\n  detect installed JDK(s) in \"${javaDir}\" ..."
+if [ ! $javaDir ] || [ ! -d $javaDir ]; then
+  echo -e "\n  directory \"${javaDir}\" not found."
+  echo -e "  Solution:\n   1. Install JDK in \"${javaDir}\"."
+  echo -e "   2. set argument directory installed JDK(s).\n      e.g.) ${0} /opt/java"
+  exit 1
+fi
+javaVers=($(ls -F $javaDir | grep / | grep jdk | sed -e 's/\///' | sed -e 's/.*jdk//'))
+
+javaClVer=$((java -version 2>&1) | grep -i version | cut -d '"' -f 2)
+if [ ! $javaClVer ]; then
+  echo -e "\n  java: command not found.\n  Solution: Set alternatives for \"java\"."
+  exit 1
 fi
 
-jdkVer=$((echo $javaVer) | cut -d '.' -f 2)
-if [ 0 -eq $((jdkVer)) ]; then
-  echo -e "\n  Could not detect java."
-  if [ $(find / -type f -name java -not -type l | grep -v alternatives | grep -v jre | wc -l) -gt 0 ]; then
-    echo -e "\n  Solution:\n  1. set \$PATH to jdk.\n  2. set alternatives java.\n  \"java\" found in ..."
-    find / -type f -name java -not -type l | grep -v alternatives | grep -v jre | sed -e 's/^./    \0/'
-  else
-    echo -e "\n  Install JDK first."
-  fi
+[ $JAVA_HOME ] || JAVA_HOME=$(readlink -m $(which java) | sed -e 's/\/bin\/java$//')
+[ -d $JAVA_HOME ] || JAVA_HOME=$(readlink -m $(which java) | sed -e 's/\/bin\/java$//')
+javaEnvVer=$(($JAVA_HOME/bin/java -version 2>&1) | grep -i version | cut -d '"' -f 2)
+
+if [ ! $javaEnvVer ]; then
+  echo -e "\n  \"\$JAVA_HOME\" not defined."
+  echo -e "  Solution:\n   1. \`export JAVA_HOME=/path/to/JDK/directory\`."
   exit 1
-elif [ 6 -gt $((jdkVer)) ]; then
-  echo -e "\n  Ah, we have encountered Prehistoric JDK now !\n\n  The Great Maven III said, \"N E W E R J D K\".\n"
-  exit 1
-else
-  echo -e "\n  currently JDK $(echo $javaVer | cut -d '.' -f 2,3 | sed -e 's/\.0_/u/') has defined as a command of \`java\`."
 fi
 
-[ -e /usr/local/mvn ] || mkdir -p /usr/local/mvn
-for mavenVer in 3.2.5 3.3.9; do
-  if [ -e /usr/local/mvn/apache-maven-$mavenVer ]; then continue; fi
-  echo -e "\n  Download Apache maven ${mavenVer} ..."
-  curl -fLs https://www.apache.org/dist/maven/maven-3/$mavenVer/binaries/apache-maven-$mavenVer-bin.tar.gz \
-   -o /tmp/apache-maven-$mavenVer-bin.tar.gz
-  [ -e /tmp/apache-maven-$mavenVer-bin.tar.gz ] && \
-   tar zxf /tmp/apache-maven-$mavenVer-bin.tar.gz -C /usr/local/mvn
-  if [ ! -e /usr/local/mvn/apache-maven-$mavenVer ]; then
-    echo "    maven-${mavenVer} install failed."
-    continue
-  fi
-  alternatives --remove mvn /usr/local/mvn/apache-maven-$mavenVer >/dev/null 2>&1
-  alternatives --install /usr/local/bin/mvn mvn /usr/local/mvn/apache-maven-$mavenVer/bin/mvn $(echo $mavenVer | sed -e 's/\./0/g') \
-   --slave /usr/local/bin/mvnDebug mvnDebug /usr/local/mvn/apache-maven-$mavenVer/bin/mvnDrbug \
-   --slave /usr/local/bin/mvnyjp mvnyjp /usr/local/mvn/apache-maven-$mavenVer/bin/mvnyjp
-  if [ $(((alternatives --display mvn) | grep $mavenVer/bin/mvn | wc -l)) -gt 0 ]; then
-    echo "    maven-${mavenVer} installed in \"/usr/local/mvn/apache-maven-${mavenVer}\"."
-  else
-    echo "    maven-${mavenVer} install failed."
-  fi
+[ "${javaClVer}" = "${javaEnvVer}" ] || \
+ echo -e "\n  Warning:\n   `java` and `\$JAVA_HOME/bin/java` does not match."
+
+[ -L /etc/alternatives/java ] || \
+ echo -e "\n  Warning:\n   alternatives for java not defined."
+
+echo -e "\n  \$JAVA_HOME: ${JAVA_HOME}\n  Java Version: ${javaClVer}\n  installed JDK version(s):"
+[ $(echo ${javaVers[*]} | grep $javaClVer | wc -l) -gt 0 ] || \
+ javaVers=("${javaVers[@]}" $javaClVer)
+[ $(echo ${javaVers[*]} | grep $javaEnvVer | wc -l) -gt 0 ] || \
+ javaVers=("${javaVers[@]}" $javaEnvVer)
+
+for v in "${javaVers[@]}"; do
+  echo -e "   ${v}"
 done
 
-[ -e /etc/profile.d/mvn.sh ] || cat << _EOT_ > /etc/profile.d/mvn.sh
-#/etc/profile.d/mvn.sh
+[ -e $mavenDir ] || mkdir -p $mavenDir
+for javaVer in "${javaVers[@]}"; do
+  sourceUrl=https://www.apache.org/dist/maven/maven-3/@ver/binaries/apache-maven-@ver-bin.tar.gz
+  jdkVer=$(echo $javaVer | cut -d '.' -f 2)
+  mavenVer=3.3.9
 
-# Set Environment with alternatives for Apache Maven.
-if [ \$JAVA_HOME ]; then
-  jdkVer=((\$JAVA_HOME/bin/java -version 2>&1) | grep -i version | cut -d '"' -f 2 | cut -d '.' -f 2)
-elif [ $(((which java 2>&1) | grep -e "\/bin\/java" | wc -l)) -gt 0 ]; then
-  export JAVA_HOME=((which java 2>&1) | sed -e 's/\/bin\/java//')
-  jdkVer=((\$JAVA_HOME/bin/java -version 2>&1) | grep -i version | cut -d '"' -f 2 | cut -d '.' -f 2)
-fi
+  if [ $((jdkVer)) -lt 7 ]; then
+    mavenVer=3.2.5
+  elif [ $((jdkVer)) -lt 6 ]; then
+    mavenVer=2.2.1
+    sourceUrl=$(echo $sourceUrl | sed -e 's/www/archives/' | sed -e 's/\/maven-3\/@ver//')
+  fi
 
-if [ \$((jdkVer)) -gt 6 ]; then
-  alternatives --set mvn /usr/local/maven/apache-maven-3.3.9/bin/mvn
-elif [ \$((jdkVer)) -gt 4 ]; then
-  alternatives --set mvn /usr/local/maven/apache-maven-3.2.5/bin/mvn
-else
-  exit 0
-fi
-export M2_HOME=(readlink -m \$(which mvn) | sed -e 's/\/bin\/mvn//')
-export M2=\$M2_HOME/bin
+  if [ -e $mavenDir/apache-maven-$mavenVer ]; then
+    echo "  apache-maven-${mavenVer} already installed in \"${mavenDir}\"."
+  else
+    sourceUrl=$(echo $sourceUrl | sed -e "s/@ver/${mavenVer}/g")
+    source=$(echo $sourceUrl | sed -e 's/.*\///g')
+    echo "  downloading ${source} ..."
+    curl -fLs "${sourceUrl}" -o /tmp/$source
+    if [ ! -e /tmp/$source ]; then
+      echo "   ${source} download failed."
+    else
+      tar zxf /tmp/$source -C $mavenDir
+      if [ -e $mavenDir/apache-maven-$mavenVer ]; then
+        echo -e "\n   ${source} installed in \"${mavenDir}\".\n"
+         rm -f /tmp/$source >/dev/null 2>&1
+      else
+        echo "   ${source} install failed."
+      fi
+    fi
+  fi
 
-_EOT_
-
+  if [ -e $mavenDir/apache-maven-$mavenVer ] &&
+     [ $((jdkVer)) -gt 5 ] &&
+     [ $(ls -F $javaDir | grep / | grep $javaVer | wc -l) -gt 0 ]; then
+    sourceUrl=https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.$jdkVer.alternatives.sh
+    source=$(echo $sourceUrl | sed -e 's/.*\///g')
+    if [ ! -e /tmp/$source ]; then
+      curl -fLs "${sourceUrl}" -o /tmp/$source
+       chmod +x /tmp/$source
+      sed -i -e '$s/.*/\0 \\/' /tmp/$source
+      echo -e " --slave /usr/bin/mvn mvn ${mavenDir}/apache-maven-${mavenVer}/bin/mvn \\" >> /tmp/$source
+      echo -e " --slave /usr/bin/mvnDebug mvnDebug ${mavenDir}/apache-maven-${mavenVer}/bin/mvnDebug \\" >> /tmp/$source
+      echo -e " --slave /usr/bin/mvnyjp mvnyjp ${mavenDir}/apache-maven-${mavenVer}/bin/mvnyjp\n" >> /tmp/$source
+      /tmp/$source ${javaVer}
+      #rm -f /tmp/$source
+    fi
+  fi
+done
+exit 0
