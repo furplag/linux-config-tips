@@ -114,6 +114,21 @@ _EOT_
   fi
 done
 
+ cat _EOT_ > /etc/profile.d/java.sh
+#!/etc/profile.d/java.sh
+
+# Set Environment with alternatives for Java VM.
+[ -e /usr/bin/java ] && export JAVA_HOME=\$(readlink -m \$(which java) | sed -e 's/\/bin\/java$//')
+
+# Set Environment with alternatives for Apache Maven.
+[ -e /usr/bin/mvn ] && export M2=\$(readlink -m \$(which mvn))
+[ -z "\${M2}" ] || export M2_HOME=\$(echo \$M2 | sed -e 's/\/bin\/mvn$//g')
+
+_EOT_
+
+echo -e "\n  Cleanup ..."
+rm -rf $workDir
+
 
 
 exit 0
