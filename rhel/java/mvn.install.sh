@@ -13,9 +13,10 @@
 # variables
 javaDir=${1:-/usr/java}
 mavenDir=${2:-/usr/maven}
+workDir=$mavenDir/tmp/`date +"%Y-%m-%d-%H_%M_%S"`
 
 echo -e "\nInstall Apache Maven"
-if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\n  Permission Denied, Root user only.\n  Solution: sudo ${0}"; exit 0; fi
+if [ ! ${EUID:-${UID}} = 0 ]; then echo -e "\n  Permission Denied, Root user only.\n  Solution: sudo ${0}"; exit 1; fi
 
 echo -e "\n  detect installed JDK(s) in \"${javaDir}\" ..."
 if [ ! $javaDir ] || [ ! -d $javaDir ]; then
@@ -58,17 +59,22 @@ for v in "${javaVers[@]}"; do
   echo -e "   ${v}"
 done
 
-[ -e $mavenDir ] || mkdir -p $mavenDir
+[ -e $workDir ] || mkdir -p $workDir
+if [ ! -e $workDir ]; then
+  echo -e "\n  could not create \"${workDir}\"."
+  exit 1
+fi
+
 for javaVer in "${javaVers[@]}"; do
   sourceUrl=https://www.apache.org/dist/maven/maven-3/@ver/binaries/apache-maven-@ver-bin.tar.gz
   jdkVer=$(echo $javaVer | cut -d '.' -f 2)
   mavenVer=3.3.9
 
-  if [ $((jdkVer)) -lt 7 ]; then
-    mavenVer=3.2.5
-  elif [ $((jdkVer)) -lt 6 ]; then
+  if [ $((jdkVer)) -lt 6 ]; then
     mavenVer=2.2.1
-    sourceUrl=$(echo $sourceUrl | sed -e 's/www/archives/' | sed -e 's/\/maven-3\/@ver//')
+    sourceUrl=$(echo $sourceUrl | sed -e 's/www/archive/' | sed -e 's/\/maven-3\/@ver//')
+  elif [ $((jdkVer)) -lt 7 ]; then
+    mavenVer=3.2.5
   fi
 
   if [ -e $mavenDir/apache-maven-$mavenVer ]; then
@@ -77,14 +83,13 @@ for javaVer in "${javaVers[@]}"; do
     sourceUrl=$(echo $sourceUrl | sed -e "s/@ver/${mavenVer}/g")
     source=$(echo $sourceUrl | sed -e 's/.*\///g')
     echo "  downloading ${source} ..."
-    curl -fLs "${sourceUrl}" -o /tmp/$source
-    if [ ! -e /tmp/$source ]; then
+    curl -fLv "${sourceUrl}" -o $workDir/$source
+    if [ ! -e $workDir/$source ]; then
       echo "   ${source} download failed."
     else
-      tar zxf /tmp/$source -C $mavenDir
+      tar zxf $workDir/$source -C $mavenDir
       if [ -e $mavenDir/apache-maven-$mavenVer ]; then
-        echo -e "\n   ${source} installed in \"${mavenDir}\".\n"
-         rm -f /tmp/$source >/dev/null 2>&1
+        echo -e "\n   apache-maven-${mavenVer} installed in \"${mavenDir}\".\n"
       else
         echo "   ${source} install failed."
       fi
@@ -92,20 +97,23 @@ for javaVer in "${javaVers[@]}"; do
   fi
 
   if [ -e $mavenDir/apache-maven-$mavenVer ] &&
-     [ $((jdkVer)) -gt 5 ] &&
      [ $(ls -F $javaDir | grep / | grep $javaVer | wc -l) -gt 0 ]; then
     sourceUrl=https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.$jdkVer.alternatives.sh
     source=$(echo $sourceUrl | sed -e 's/.*\///g')
-    if [ ! -e /tmp/$source ]; then
-      curl -fLs "${sourceUrl}" -o /tmp/$source
-       chmod +x /tmp/$source
-      sed -i -e '$s/.*/\0 \\/' /tmp/$source
-      echo -e " --slave /usr/bin/mvn mvn ${mavenDir}/apache-maven-${mavenVer}/bin/mvn \\" >> /tmp/$source
-      echo -e " --slave /usr/bin/mvnDebug mvnDebug ${mavenDir}/apache-maven-${mavenVer}/bin/mvnDebug \\" >> /tmp/$source
-      echo -e " --slave /usr/bin/mvnyjp mvnyjp ${mavenDir}/apache-maven-${mavenVer}/bin/mvnyjp\n" >> /tmp/$source
-      /tmp/$source ${javaVer}
-      #rm -f /tmp/$source
+    if [ ! -e $workDir/$source ]; then
+      curl -fLs "${sourceUrl}" -o $workDir/$source
+       chmod +x $workDir/$source
+      sed -i -e '$s/.*/\0 \\/' $workDir/$source
+      cat << _EOT_ >> $workDir/$source
+ --slave /usr/bin/mvn mvn ${mavenDir}/apache-maven-${mavenVer}/bin/mvn \\
+ --slave /usr/bin/mvnDebug mvnDebug ${mavenDir}/apache-maven-${mavenVer}/bin/mvnDebug \\
+ --slave /usr/bin/mvnyjp mvnyjp ${mavenDir}/apache-maven-${mavenVer}/bin/mvnyjp
+
+_EOT_
     fi
   fi
 done
+
+
+
 exit 0
