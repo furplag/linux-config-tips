@@ -44,7 +44,7 @@ elif [ ! -e $javaHome ]; then
   exit 1
 fi
 
-version=$($jdkHome/bin/java -version 2>&1 | grep -i version | cut -d '"' -f 2)
+version=$($javaHome/bin/java -version 2>&1 | grep -i version | cut -d '"' -f 2)
 if [ -z "${version}" ]; then
   [ $quietly ] || echo -e "\n  \"${javaHome}\" is not Java home."
   exit 1
@@ -56,5 +56,9 @@ if [ $ver -eq 0 ]; then
   [ $quietly ] || echo -e "\n  \"${javaHome}\" is not Java home."
   exit 1
 fi
+
+echo "[${javaHome}]"
+echo "[${version}]"
+echo "[${ver}]"
 
 exit 0
