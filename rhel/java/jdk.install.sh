@@ -156,7 +156,7 @@ fi
    fi
  done
 
-if [ $((echo "${jdkVers[*]}" | grep "1.${ver}.0_${updateVer}") | wc -l) -gt 0 ]; then
+if [ "${#jdkVers[@]}" -gt 0 ] && [ $((echo "${jdkVers[*]}" | grep "1.${ver}.0_${updateVer}") | wc -l) -gt 0 ]; then
   echo -e "\n  JDK ${nameOfVer} already installed."
   installSource=jdk1.${ver}.0_${updateVer}
 elif [ $(($ver)) -lt 6 ]; then
@@ -234,7 +234,11 @@ if [ $downloadURL ]; then
 
   if [ -n "${jdkDir}" ] && [ -n "${installSource}" ] && [ -e $jdkDir/$installSource ]; then
     echo -e "\n  JDK ${nameOfVer} installed in \"${jdkDir}/jdk1.${ver}.0_${updateVer}\"."
-    jdkVers=("${jdkVers[@]}" "1.${ver}.0_${updateVer}")
+    if [ "${#jdkVers[@]}" -gt 0 ]; then
+      jdkVers=("${jdkVers[@]}" "1.${ver}.0_${updateVer}")
+    else
+      jdkVers=("1.${ver}.0_${updateVer}")
+    fi
   else
     echo -e "\n  JDK ${nameOfVer} (${downloadSource}) install failed."
     exit 1
