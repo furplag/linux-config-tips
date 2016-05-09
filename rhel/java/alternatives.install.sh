@@ -37,23 +37,23 @@ while getopts dq: OPT; do
 done
 
 if [ -z "${javaHome}" ]; then
-  [ $quietly ] || usage
+  $quietly || usage
   exit 1
 elif [ ! -e $javaHome ]; then
-  [ $quietly ] || echo -e "\n  \"${javaHome}\" is not Java home."
+  $quietly || echo -e "\n  \"${javaHome}\" is not Java home."
   exit 1
 fi
 
 version=$($javaHome/bin/java -version 2>&1 | grep -i version | cut -d '"' -f 2)
 if [ -z "${version}" ]; then
-  [ $quietly ] || echo -e "\n  \"${javaHome}\" is not Java home."
+  $quietly || echo -e "\n  \"${javaHome}\" is not Java home."
   exit 1
 fi
 
 ver=$(echo $version | cut -d '.' -f 2)
 
 if [ $ver -eq 0 ]; then
-  [ $quietly ] || echo -e "\n  \"${javaHome}\" is not Java home."
+  $quietly || echo -e "\n  \"${javaHome}\" is not Java home."
   exit 1
 fi
 
