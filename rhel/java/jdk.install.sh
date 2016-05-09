@@ -205,10 +205,10 @@ if [ $downloadURL ]; then
     currentDir=`pwd`
     cd "${workDir}"
     if [[ "${downloadURL}" =~ rpm\.bin$ ]]; then
-      $workDir/$downloadSource -x >/dev/null 2&>1
+      $workDir/$downloadSource -x >/dev/null 2>&1
       installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "rpm$" | sed -e 's/.*\s//') 2>&1)
     else
-      $workDir/$downloadSource >/dev/null 2&>1
+      $workDir/$downloadSource >/dev/null 2>&1
       installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "_${updateVer}\/$" | sed -e 's/.*\s//' | sed -e 's/\/$//') 2>&1)
     fi
     cd "${currentDir}"
@@ -224,11 +224,11 @@ if [ $downloadURL ]; then
     fi
   elif [[ "${downloadSource}" =~ \.rpm$ ]]; then
     echo -e "\n  Installing JDK ${nameOfVer} ..."
-    yum install -y $workDir/$downloadSource >/dev/null 2&>1
+    yum install -y $workDir/$downloadSource >/dev/null 2>&1
     installSource=jdk1.$ver.0_$updateVer
   elif [[ "${installSource}" =~ \.rpm$ ]]; then
     echo -e "\n  Installing JDK ${nameOfVer} ..."
-    yum install -y $workDir/$installSource >/dev/null 2&>1
+    yum install -y $workDir/$installSource >/dev/null 2>&1
     installSource=jdk1.$ver.0_$updateVer
   fi
 
