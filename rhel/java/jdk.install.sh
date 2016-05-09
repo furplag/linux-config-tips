@@ -60,7 +60,7 @@ _EOT_
 
 if [ ! ${EUID:-${UID}} = 0 ]; then usage; echo -e "\nPermission Denied, Root user only.\nHint: sudo ${0}"; exit 1; fi
 
-while getopts mv: OPT; do
+while getopts hmv: OPT; do
   case $OPT in
     v) verStr=${OPTARG:-${defaultVer}};;
     m) maven=true;;
@@ -262,7 +262,7 @@ if [ $installSource ]; then
     curl -fLs "${scriptURL}jdk.${jVer}.alternatives.sh" \
      -o ${workDir}/jdk.${jVer}.alternatives.sh
     [ $? ] || continue
-    if [ $maven ]; then
+    if $maven; then
       [ -e $mavenDir ] || mkdir $mavenDir
       mavenSource=$(echo $mavenSourceBase | sed -e "s/@mavenVer/${mavenVer}/")
       if [ ! -e ${mavenDir}/${mavenSource} ]; then 
@@ -289,7 +289,7 @@ _EOT_
     fi
     chmod +x ${workDir}/jdk.${jVer}.alternatives.sh
     ${workDir}/jdk.${jVer}.alternatives.sh "${jdkVer}"
-    if [ $embed ];then continue; fi
+    if $embed; then continue; fi
     echo -e "\n  Set Environment \$JAVA_HOME (relate to alternatives config).\n"
     cat <<_EOT_ > /etc/profile.d/java.sh
 #/etc/profile.d/java.sh
@@ -298,7 +298,7 @@ _EOT_
 export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
 
 _EOT_
-     [ $maven ] && cat <<_EOT_ >> /etc/profile.d/java.sh
+     $maven && cat <<_EOT_ >> /etc/profile.d/java.sh
 # Set Environment with alternatives for Apache Maven.
 [ -e /usr/bin/mvn ] && export M2=\$(readlink -m \$(which mvn))
 [ -n "\${M2}" ] && export M2_HOME=\$(echo \$M2 | sed -e 's/\/bin\/mvn$//g')
@@ -330,7 +330,7 @@ if [ $jdkDir ] && [ $installSource ] && [ -e $jdkDir/$installSource ]; then
     echo -e "     - or -"
     echo -e "    alternatives --set java ${jdkDir}/${installSource}/bin/java && \ \n     source /etc/profile"
   fi
-  [ $maven ] && \
+  $maven && \
     echo -e "\n  Maven:\n$((echo "`mvn -version 2>&1`") | sed -e 's/^./    \0/')"
 else
   echo -e "\n  Install JDK ${nameOfVer} failed."
