@@ -25,6 +25,7 @@ declare downloadSource=
 declare conflictVer=
 declare installSource=
 declare -r scriptURL=https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/
+declare embed=false
 
 # Usage
 usage(){
@@ -163,7 +164,7 @@ elif [ $(($ver)) -lt 6 ]; then
 elif [ $(($buildVer)) -eq 0 ]; then
   downloadURL="${baseURL}/${ver}u${updateVer}/jdk-${ver}u${updateVer}-linux-amd64-rpm.bin"
 elif [ $(($ver)) -eq 6 ]; then
-  downloadURL="${baseURL}/${ver}u${updateVer}/jdk-${ver}u${updateVer}-linux-x64-rpm.bin"
+  downloadURL="${baseURL}/${nameOfVer}/jdk-${ver}u${updateVer}-linux-x64-rpm.bin"
 else
   downloadURL="${baseURL}/${nameOfVer}/jdk-${ver}u${updateVer}-linux-x64.rpm"
 fi
@@ -181,8 +182,7 @@ if [ $downloadURL ]; then
       downloadURL=$((echo $downloadURL) | sed -e 's/-rpm//' | sed -e 's/\.rpm$/.tar.gz/')
     elif [ $(($updateVer)) -gt $((echo $conflictVer) | cut -d '_' -f 2) ]; then
       echo -e "\n    previous updated version of JDK ${ver} has installed.\n    escaping previous version ..."
-      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk1.$ver.0_[0-$(($updateVer-1))]*
-      downloadURL=$((echo $downloadURL) | sed -e 's/-rpm//' | sed -e 's/\.rpm$/.tar.gz/')
+      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk1.$ver.0_[0-$(($updateVer-1))]* >/dev/null 2>&1
     elif [ $(($updateVer)) -lt $((echo $conflictVer) | cut -d '_' -f 2) ]; then
       echo -e "\n    newly updated version of JDK ${ver} has installed."
       downloadURL=$((echo $downloadURL) | sed -e 's/-rpm//' | sed -e 's/\.rpm$/.tar.gz/')
@@ -191,19 +191,28 @@ if [ $downloadURL ]; then
 
   downloadSource=$((echo $downloadURL) | sed -e 's/.*\///')
   echo -e "\n  Downloading JDK ${nameOfVer} (${downloadSource}) ..."
-  curl -fL -# $downloadURL \
+  curl -fjkL -# $downloadURL \
    -H "Cookie: oraclelicense=accept-securebackup-cookie" \
    -o $workDir/$downloadSource
 
-  if [ $(($?)) -ne 0 ]; then
+  if [ ! -e $workDir/$downloadSource ]; then
+  echo hey1
     echo -e "\n  JDK ${nameOfVer} (${downloadSource}) download failed."
+
+  echo $workDir
+  ls $workDir
+  if [ -e $workDir/$downloadSource ]; then echo yep; else echo nope; fi
+
     exit 1
   elif [[ "${downloadSource}" =~ \.bin$ ]]; then
     chmod +x $workDir/$downloadSource
     sed -i 's/agreed=/agreed=1/g' $workDir/$downloadSource
     sed -i 's/more <<"EOF"/cat <<"EOF"/g' $workDir/$downloadSource
     if [[ "${downloadURL}" =~ rpm\.bin$ ]]; then
-      unzip -o $workDir/$downloadSource -d $workDir >/dev/null 2&>1 || echo >/dev/null
+      currentDir=`pwd`
+      cd "${workDir}"
+      $workDir/$downloadSource -x >/dev/null 2&>1
+      cd "${currentDir}"
       installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "rpm$" | sed -e 's/.*\s//') 2>&1)
     else
       currentDir=`pwd`
@@ -217,23 +226,34 @@ if [ $downloadURL ]; then
     installSource=$(tar ztf $workDir/$downloadSource | grep -e "_${updateVer}\/$" | sed -e "s/\/$//")
   fi
 
-  if [ $workDir ] && [ $installSource ] && [ -e $workDir/$installSource ]; then
+  if [ -n "${workDir}" ] && [ -n "${installSource}" ] && [ -d $workDir/$installSource ]; then
+  echo hey2
     echo -e "\n  Installing JDK ${nameOfVer} ..."
     if [ -d $workDir/$installSource ]; then
-      cp -p $workDir/$installSource $jdkDir/$installSource
+      cp -pR $workDir/$installSource $jdkDir/$installSource
     fi
   elif [[ "${downloadSource}" =~ \.rpm$ ]]; then
     echo -e "\n  Installing JDK ${nameOfVer} ..."
     yum install -y $workDir/$downloadSource >/dev/null 2&>1
     installSource=jdk1.$ver.0_$updateVer
+  elif [[ "${installSource}" =~ \.rpm$ ]]; then
+    echo -e "\n  Installing JDK ${nameOfVer} ..."
+    yum install -y $workDir/$installSource >/dev/null 2&>1
+    installSource=jdk1.$ver.0_$updateVer
   fi
 
-  if [ $jdkDir -a $installSource ] && [ -e $jdkDir/$installSource ]; then
+  if [ -n "${jdkDir}" ] && [ -n "${installSource}" ] && [ -e $jdkDir/$installSource ]; then
     echo -e "\n  JDK ${nameOfVer} installed in \"${jdkDir}/jdk1.${ver}.0_${updateVer}\"."
+    jdkVers=("${jdkVers[@]}" "1.${ver}.0_${updateVer}")
   else
     echo -e "\n  JDK ${nameOfVer} (${downloadSource}) install failed."
     exit 1
   fi
+fi
+
+if [ -e $workDir/stealth.jdk.tar.gz ]; then
+  echo -e "\n  restoring previous version ..."
+  tar zxf $workDir/stealth.jdk.tar.gz -C $jdkDir --strip=$(echo "$jdkDir" | sed -e 's/^\///' | sed -e 's/\//\n/g' | wc -l)
 fi
 
 if [ $installSource ]; then
@@ -279,6 +299,7 @@ _EOT_
     fi
     chmod +x ${workDir}/jdk.${jVer}.alternatives.sh
     ${workDir}/jdk.${jVer}.alternatives.sh "${jdkVer}"
+    if [ $embed ];then continue; fi
     echo -e "\n  Set Environment \$JAVA_HOME (relate to alternatives config).\n"
     cat <<_EOT_ > /etc/profile.d/java.sh
 #/etc/profile.d/java.sh
@@ -287,12 +308,13 @@ _EOT_
 export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
 
 _EOT_
-     [ maven ] && cat <<_EOT_ >> /etc/profile.d/java.sh
+     [ $maven ] && cat <<_EOT_ >> /etc/profile.d/java.sh
 # Set Environment with alternatives for Apache Maven.
 [ -e /usr/bin/mvn ] && export M2=\$(readlink -m \$(which mvn))
 [ -n "\${M2}" ] && export M2_HOME=\$(echo \$M2 | sed -e 's/\/bin\/mvn$//g')
 
 _EOT_
+    $embed=true
   done
 fi
 
@@ -316,11 +338,10 @@ if [ $jdkDir ] && [ $installSource ] && [ -e $jdkDir/$installSource ]; then
   if [ -e /etc/profile.d/java.sh ]; then
     echo -e "\n  usage:\n    alternatives --config java && source /etc/profile"
     echo -e "     - or -"
-    echo -e "    alternatives --set java ${jdkDir}/${installSource}/bin/java && \ \n     source /etc/profile\n"
+    echo -e "    alternatives --set java ${jdkDir}/${installSource}/bin/java && \ \n     source /etc/profile"
   fi
   [ $maven ] && \
     echo -e "\n  Maven:\n$((echo "`mvn -version 2>&1`") | sed -e 's/^./    \0/')"
-  fi
 else
   echo -e "\n  Install JDK ${nameOfVer} failed."
   [ $(`which java 2>/dev/null` -version 2>&1 | grep -e "java version" | wc -l) -gt 0 ] && \
@@ -329,5 +350,8 @@ else
    echo -e "  JAVA_HOME: ${JAVA_HOME}"
   exit 1
 fi
+
+echo -e "\n  cleanup ..."
+rm -rf $workDir >/dev/null 2>&1
 
 exit 0
