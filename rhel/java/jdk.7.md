@@ -115,7 +115,7 @@ curl https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jav
 # e.g. /tmp/jdk.install.sh -v 7u51-b13
 
 # use "m" option if you need to install maven. 
-# e.g. /tmp/jdk.6.install.sh -v 7 -m
+# e.g. /tmp/jdk.install.sh -v 7 -m
 ```
 ---
 
