@@ -116,9 +116,14 @@ curl https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jav
  chmod +x /tmp/jdk.install.sh && \
  /tmp/jdk.6.install.sh -v 6
 
+# use "v" option if you need to install another version of JDK 6.
+# e.g. /tmp/jdk.6.install.sh -v 6u25-b06
+
 # use "m" option if you need to install maven. 
 # e.g. /tmp/jdk.6.install.sh -v 6 -m
+
 ```
+###### Note: "build version" required 1.6.0_4 or later.
 ---
 
 ### Usage
