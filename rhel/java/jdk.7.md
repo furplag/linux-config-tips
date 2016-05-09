@@ -20,6 +20,14 @@
 ----
 
 ### Downloading Oracle JDK only use command-line.
+curl:
+```bash
+curl -fjkL https://edelivery.oracle.com/otn-pub/java/jdk/7u80-b15/jdk-7u80-linux-x64.rpm \
+ -H "Cookie: oraclelicense=accept-securebackup-cookie" \
+ -O
+```
+
+wget:
 ```bash
 wget http://download.oracle.com/otn-pub/java/jdk/7u80-b15/jdk-7u80-linux-x64.rpm \
  --no-check-certificate \
@@ -96,12 +104,18 @@ export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
 
 _EOT_
 ```
-### [That's It.](jdk.7.install.sh)
+### [That's It.](jdk.install.sh)
 ```bash
-wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.7.install.sh \
- -qO /tmp/jdk.7.install.sh && \
- chmod +x /tmp/jdk.7.install.sh && \
- /tmp/jdk.7.install.sh
+curl https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.install.sh \
+ -o /tmp/jdk.install.sh && \
+ chmod +x /tmp/jdk.install.sh && \
+ /tmp/jdk.install.sh -v 7
+
+# use "v" option if you need to install another version of JDK 7.
+# e.g. /tmp/jdk.install.sh -v 7u51-b13
+
+# use "m" option if you need to install maven. 
+# e.g. /tmp/jdk.6.install.sh -v 7 -m
 ```
 ---
 
@@ -132,18 +146,16 @@ echo -e "\$JAVA_HOME=${JAVA_HOME}"
 ### yum (or rpm) says "[upper version of jdk] already installed".
 #### 1. Source install
 ```bash
-wget http://download.oracle.com/otn-pub/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz \
- --no-check-certificate \
- --no-cookies \
- --header "Cookie: oraclelicense=accept-securebackup-cookie"
+curl -fjkL https://edelivery.oracle.com/otn-pub/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz \
+ -H "Cookie: oraclelicense=accept-securebackup-cookie" \
+ -O
 ```
 #### 2. Unpacking
 ```bash
-tar zxf jdk-7u80-linux-x64.tar.gz && \
- [ ! -e /usr/java ] && mkdir -p /usr/java && \
- mv jdk1.7.0_80 /usr/java/.
+[ -e /usr/java ] || mkdir /usr/java
+tar zxf jdk-7u80-linux-x64.tar.gz -C /usr/java
 ```
 and continuing **[next](#install-alternatives-for-jdk)**.
 
 ### Could install another version of JDK 7?
-Need to sign in Oracle. Download JDK 7 manually (with web browser).
+[Use this](jdk.install.sh).
