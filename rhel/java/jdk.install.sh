@@ -304,7 +304,7 @@ _EOT_
 [ -n "\${M2}" ] && export M2_HOME=\$(echo \$M2 | sed -e 's/\/bin\/mvn$//g')
 
 _EOT_
-    $embed=true
+    embed=true
   done
 fi
 
