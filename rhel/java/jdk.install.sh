@@ -41,7 +41,7 @@ Description:
 Requirement:
   1. root user executable only.
   2. Installable JDK version: 5 - 8.
-usgae: ${name} [-v jdkVersion] [-m]"
+usgae: ${name} [-v jdkVersion] [-m]
   -v : jdkVersion (optional, default : 8u92-b14)
        (1.)[version]
          5 : 5u22
