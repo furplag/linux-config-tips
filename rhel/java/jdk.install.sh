@@ -196,38 +196,28 @@ if [ $downloadURL ]; then
    -o $workDir/$downloadSource
 
   if [ ! -e $workDir/$downloadSource ]; then
-  echo hey1
     echo -e "\n  JDK ${nameOfVer} (${downloadSource}) download failed."
-
-  echo $workDir
-  ls $workDir
-  if [ -e $workDir/$downloadSource ]; then echo yep; else echo nope; fi
-
     exit 1
   elif [[ "${downloadSource}" =~ \.bin$ ]]; then
     chmod +x $workDir/$downloadSource
     sed -i 's/agreed=/agreed=1/g' $workDir/$downloadSource
     sed -i 's/more <<"EOF"/cat <<"EOF"/g' $workDir/$downloadSource
+    currentDir=`pwd`
+    cd "${workDir}"
     if [[ "${downloadURL}" =~ rpm\.bin$ ]]; then
-      currentDir=`pwd`
-      cd "${workDir}"
       $workDir/$downloadSource -x >/dev/null 2&>1
-      cd "${currentDir}"
       installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "rpm$" | sed -e 's/.*\s//') 2>&1)
     else
-      currentDir=`pwd`
-      cd "${workDir}"
       $workDir/$downloadSource >/dev/null 2&>1
-      cd "${currentDir}"
       installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "_${updateVer}\/$" | sed -e 's/.*\s//' | sed -e 's/\/$//') 2>&1)
     fi
+    cd "${currentDir}"
   elif [[ "${downloadSource}" =~ \.tar\.gz$ ]]; then
     tar zxf $workDir/$downloadSource -C $workDir
     installSource=$(tar ztf $workDir/$downloadSource | grep -e "_${updateVer}\/$" | sed -e "s/\/$//")
   fi
 
   if [ -n "${workDir}" ] && [ -n "${installSource}" ] && [ -d $workDir/$installSource ]; then
-  echo hey2
     echo -e "\n  Installing JDK ${nameOfVer} ..."
     if [ -d $workDir/$installSource ]; then
       cp -pR $workDir/$installSource $jdkDir/$installSource
@@ -280,9 +270,9 @@ if [ $installSource ]; then
         echo -e "\n  Downloading Apache Maven ${mavenVer} ..."
         [[ "${mavenVer}" =~ ^3 ]] || \
          mavenSourceURL=$(echo $mavenSourceURL | sed -e 's/www/archive/' | sed -e "s/\/maven-3\/${mavenVer}//")
-        curl -fL -# $mavenSourceURL \
+        curl -fjkL -# $mavenSourceURL \
          -o ${workDir}/${mavenSource}-bin.tar.gz
-        if [ $? ]; then
+        if [ -e ${workDir}/${mavenSource}-bin.tar.gz ]; then
           tar zxf ${workDir}/${mavenSource}-bin.tar.gz -C $mavenDir >/dev/null 2>&1
         else
           echo -e "\n  ${mavenSource} download failed."
