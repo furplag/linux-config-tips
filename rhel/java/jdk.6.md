@@ -20,6 +20,14 @@
 ----
 
 ### Downloading Oracle JDK only use command-line.
+curl:
+```bash
+curl -fjkL https://edelivery.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin \
+ -H "Cookie: oraclelicense=accept-securebackup-cookie" \
+ -O
+```
+
+wget:
 ```bash
 wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm.bin \
  --no-check-certificate \
@@ -32,8 +40,12 @@ wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64-rpm
 # To executable "jdk-6u45-linux-x64-rpm.bin".
 chmod +x jdk-6u45-linux-x64-rpm.bin
 
-# Unpacking "jdk-6u45-linux-x64-rpm.bin", if you do not need JavaDB (I do not need).
-unzip jdk-6u45-linux-x64-rpm.bin -x sun-javadb*
+# Skip "license agreement".
+sed -i 's/agreed=/agreed=1/g' jdk-6u45-linux-x64-rpm.bin
+sed -i 's/more <<"EOF"/cat <<"EOF"/g' jdk-6u45-linux-x64-rpm.bin
+
+# Unpacking.
+jdk-6u45-linux-x64-rpm.bin -x
 ```
 ###### Note: If you need fully install, just do `./jdk-6u45-linux-x64-rpm.bin`.
 Then install.
@@ -97,12 +109,15 @@ export JAVA_HOME=\$(readlink /etc/alternatives/java | sed -e 's/\/bin\/java//g')
 
 _EOT_
 ```
-### [That's It.](jdk.6.install.sh)
+### [That's It.](jdk.install.sh)
 ```bash
-wget https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.6.install.sh \
- -qO /tmp/jdk.6.install.sh && \
- chmod +x /tmp/jdk.6.install.sh && \
- /tmp/jdk.6.install.sh
+curl https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/jdk.install.sh \
+ -o /tmp/jdk.install.sh && \
+ chmod +x /tmp/jdk.install.sh && \
+ /tmp/jdk.6.install.sh -v 6
+
+# use "m" option if you need to install maven. 
+# e.g. /tmp/jdk.6.install.sh -v 6 -m
 ```
 ---
 
@@ -133,19 +148,21 @@ echo -e "\$JAVA_HOME=${JAVA_HOME}"
 ### yum (or rpm) says "[upper version of jdk] already installed".
 #### 1. Source install
 ```bash
-wget http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64.bin \
- --no-check-certificate \
- --no-cookies \
- --header "Cookie: oraclelicense=accept-securebackup-cookie"
+curl -fjkL https://edelivery.oracle.com/otn-pub/java/jdk/6u45-b06/jdk-6u45-linux-x64.bin \
+ -H "Cookie: oraclelicense=accept-securebackup-cookie" \
+ -O
 ```
 #### 2. Unpacking
 ```bash
-chmod +x jdk-6u45-linux-x64.bin && \
- jdk-6u45-linux-x64.bin -x && \
+chmod +x jdk-6u45-linux-x64.bin
+sed -i 's/agreed=/agreed=1/g' jdk-6u45-linux-x64.bin
+sed -i 's/more <<"EOF"/cat <<"EOF"/g' jdk-6u45-linux-x64.bin
+
+jdk-6u45-linux-x64.bin -x && \
  [ ! -e /usr/java ] && mkdir -p /usr/java && \
  mv jdk1.6.0_45 /usr/java/.
 ```
 and continuing **[next](#install-alternatives-for-jdk)**.
 
 ### Could install another version of JDK 6?
-Need to sign in Oracle. Download JDK 6 manually (with web browser).
+[Use this](jdk.install.sh).
