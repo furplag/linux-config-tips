@@ -44,7 +44,7 @@ yum install -y jdk-8u92-linux-x64.rpm
 ```bash
 # Remove alternatives for jre8 (optional).
 alternatives --remove java /usr/java/jdk1.8.0_92/jre/bin/java
-alternatives --install /usr/bin/java java /usr/java/jdk1.8.0_92/bin/java 180077 \
+alternatives --install /usr/bin/java java /usr/java/jdk1.8.0_92/bin/java 180092 \
  --slave /usr/bin/appletviewer appletviewer /usr/java/jdk1.8.0_92/bin/appletviewer \
  --slave /usr/bin/extcheck extcheck /usr/java/jdk1.8.0_92/bin/extcheck \
  --slave /usr/bin/idlj idlj /usr/java/jdk1.8.0_92/bin/idlj \
