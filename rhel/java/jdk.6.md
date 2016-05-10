@@ -123,7 +123,7 @@ curl https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/jav
 # e.g. /tmp/jdk.install.sh -v 6 -m
 
 ```
-###### Note: "build version" required 1.6.0_4 or later.
+###### Note: "build version" required 1.6.0_11 or later.
 ---
 
 ### Usage
