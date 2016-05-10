@@ -49,6 +49,8 @@ usgae: ${name} [-v jdkVersion] [-m]
          8 : 8u92-b14
        (1.)[version].0_[updateVersion](-b[build])
        [version]u[updateVersion]-b[build]
+       Note : Use "u0" or ".0_0", if you need to install base version. 
+
   -m : install maven (optional, default : false)
        JDK 5 : maven-2.2.1
        JDK 6 : maven-3.2.5
@@ -68,16 +70,22 @@ while getopts hmv: OPT; do
   esac
 done
 
-[ -n "${verStr}" ] || verStr=$defaultVer
+if [ -z "${verStr}" ] && [ $# -eq 0 ]; then
+  verStr=$defaultVer
+elif [ -z "${verStr}" ] && [ $# -eq 1 ] && [ "${1}" = "-m" ]; then
+  verStr=$defaultVer
+elif [ -z "${verStr}" ] && [ $# -eq 1 ]; then
+  verStr=${1:-""}
+fi
 
 if [[ $verStr =~ ^(1\.)?6(u|\.0_)4(\-b12)?$ ]]; then
   nameOfVer=6u4-b12
 elif [[ $verStr =~ ^(1\.)?6(u|\.0_)5(b)?$ ]]; then
   nameOfVer=6u5b
-elif [[ $verStr =~ ^(1\.)?[5-9]u[0-9]{1,2}(\-b[0-9]{1,2})?$ ]]; then
-  nameOfVer=$(echo $verStr | sed -e 's/^1\.//')
-elif [[ $verStr =~ ^(1\.)?[5-9]\.0_[0-9]{1,2}(\-b[0-9]{1,2})?$ ]]; then
+elif [[ $verStr =~ ^(1\.)?[5-9](u|\.0_)[0-9]{1,4}(\-b[0-9]{1,4})?$ ]]; then
   nameOfVer=$(echo $verStr | sed -e 's/^1\.//' | sed -e 's/\.0_/u/')
+elif [[ $verStr =~ ^(1\.)?[5-9]\.0(\-b[0-9]{1,4})?$ ]]; then
+  nameOfVer=$(echo $verStr | sed -e 's/^1\.//' | sed -e 's/\.0/u0/')
 elif [[ $verStr =~ ^(1\.)?[5-9]$ ]]; then
   ver=$(echo $verStr | sed -e 's/^1\.//')
   case $ver in
@@ -91,20 +99,22 @@ else
 fi
 
 ver=$(echo $nameOfVer | sed -e 's/u.*//')
-updateVer=$(echo $nameOfVer | sed -e 's/.*u//' | sed -e 's/-.*//')
-
+updateVer=$(echo $nameOfVer | sed -e 's/.*u//' | sed -e 's/-.*//' | sed -e 's/b$//')
+if [ $(($updateVer)) -eq 0 ]; then
+  nameOfVer=$(echo $nameOfVer | sed -e 's/u0//')
+fi
 if [ $(echo $nameOfVer | grep -E "b[0-9]{1,2}" | wc -l) -gt 0 ]; then
   buildVer=$(echo $nameOfVer | sed -e 's/.*b//')
 fi
 
 if [ $((ver)) -gt 5 ] && [ $(($buildVer)) -eq 0 ]; then
   if [ $((ver)) -eq 6 ] && [ $((updateVer)) -gt 10 ]; then
-    echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\".\n  see at:"
-    echo "http://www.oracle.com/technetwork/java/javase/downloads/"
+    echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\".\n  see at:\n"
+    echo "    http://www.oracle.com/technetwork/java/javase/downloads/"
     exit 1
   elif [ $((ver)) -gt 6 ]; then
-    echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\".\n  see at:"
-    echo "http://www.oracle.com/technetwork/java/javase/downloads/"
+    echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\".\n\n  see at:"
+    echo "    http://www.oracle.com/technetwork/java/javase/downloads/"
     exit 1
   fi
 fi
@@ -112,84 +122,87 @@ fi
 echo -e "\n  Checking installed java ..."
 
 jdkVers=()
-[ $((rpm -qa 2>&1) | grep -e "jdk*" | grep -v -e "openjdk*" | grep x86_64 | wc -l) -gt 0 ] && \
- for j in $((rpm -qa 2>&1) | sort | grep -e "jdk*" | grep -v -e "openjdk*" | grep x86_64 | cut -d '-' -f 1,2); do
-   packageName=$(echo $j | cut -d '-' -f 1)
-   jdkVer=$(echo $j | cut -d '-' -f 2)
-   echo -e "    ${jdkVer} has installed as \"${packageName}\" (managed package)"
-   if [ "${#jdkVers[@]}" -gt 0 ]; then
-     [ $((echo "${jdkVers[*]}" | grep $jdkVer) | wc -l) -gt 0 ] || \
-      jdkVers=("${jdkVers[@]}" $jdkVer)
-   else
-     jdkVers=($jdkVer)
-   fi
-   [ $(($ver)) -gt 7 ] || [ $packageName != "jdk" ] || conflictVer=$jdkVer
- done
+tmpVers=($((rpm -qa 2>&1) | grep -e "jdk*" | grep -v -e "openjdk*" | grep x86_64))
+for j in "${tmpVers[@]}"; do
+  packageName=$(echo $j | cut -d '-' -f 1)
+  jdkVer=$(echo $j | cut -d '-' -f 2)
+  echo -e "    ${jdkVer} has installed as \"${packageName}\" (managed package)."
+  if [ "${#jdkVers[@]}" -lt 1 ]; then
+    jdkVers=($jdkVer)
+  elif [ $((echo "${jdkVers[*]} " | grep -e "${jdkVer} ") | wc -l) -lt 1 ]; then
+    jdkVers=("${jdkVers[@]}" $jdkVer)
+  fi
+  [ $(($ver)) -gt 7 ] || [ $packageName != "jdk" ] || conflictVer=$jdkVer
+done
 
-[ $((alternatives --display java 2>&1) | grep -e "\/bin\/java -" | grep -v -e "openjdk*" | wc -l) -gt 0 ] && \
- for j in $((alternatives --display java 2>&1) | sort | grep -e "\/bin\/java -" | grep -v -e "openjdk*" | sed -e 's/ -.*//'); do
-   if [ ! -e $j ]; then
-     alternatives --remove java $j 2>/dev/null && \
-     echo -e "    broken alternative path: \"${j}\" has removed."
-     continue
-   fi
-   jdkVer=$(($j -version 2>&1) | grep -i version | cut -d '"' -f 2)
-   if [ "${#jdkVers[@]}" -gt 0 ] && [ $((echo "${jdkVers[*]}" | grep $jdkVer) | wc -l) -gt 0 ]; then
-     continue
-   elif [ "${#jdkVers[@]}" -gt 0 ]; then
-     echo -e "    ${jdkVer} has install in \"$(echo $j | cut -d '-' -f 1)\" (alternatives)."
-     jdkVers=("${jdkVers[@]}" $jdkVer)
-   else
-     jdkVers=($jdkVer)
-   fi
- done
+tmpVers=($((alternatives --display java 2>&1) | sort | grep -e "\/bin\/java -" | grep -v -e "openjdk*" | sed -e 's/ -.*//'))
+for j in "${tmpVers[@]}"; do
+  if [ -e $j ]; then
+    jdkVer=$(($j -version 2>&1) | grep -i version | cut -d '"' -f 2)
+    if [ "${#jdkVers[@]}" -lt 1 ]; then
+      echo -e "    ${jdkVer} has installed in \"$(echo $j | cut -d '-' -f 1)\" (alternatives)."
+      jdkVers=($jdkVer)
+    elif [ $((echo "${jdkVers[*]} " | grep -e "${jdkVer} ") | wc -l) -lt 1 ]; then
+      echo -e "    ${jdkVer} has installed in \"$(echo $j | cut -d '-' -f 1)\" (alternatives)."
+      jdkVers=("${jdkVers[@]}" $jdkVer)
+    fi
+  else
+    alternatives --remove java $j 2>/dev/null && \
+    echo -e "    broken alternative path: \"${j}\" has removed."
+  fi
+done
 
 if [ $((alternatives --display java 2>&1) | grep -e "\/bin\/java -" | grep -v -e "openjdk*" | wc -l) -gt 0 ] && \
    [ ! `readlink -e /etc/alternatives/java` ]; then
-   alternatives --auto java
+   alternatives --auto java >/dev/null 2>&1
    echo -e "\n    repare alternatives for java: \"$(echo `readlink -m /etc/alternatives/java`)\"."
 fi
+tmpVers=($(ls -L $jdkDir 2>&1 | grep -e "^jdk"))
+for j in "${tmpVers[@]}"; do
+  jdkVer=$($jdkDir/$j/bin/java -version 2>&1 | grep -i version | cut -d '"' -f 2)
+  if [ "${#jdkVers[@]}" -lt 1 ]; then
+    echo -e "    ${jdkVer} has installed in \"$(echo $j | cut -d '-' -f 1)\" (not managed)."
+    jdkVers=($jdkVer)
+  elif [ $((echo "${jdkVers[*]} " | grep -e "${jdkVer} ") | wc -l) -lt 1 ]; then
+    echo -e "    ${jdkVer} has installed in \"${jdkDir}/${j}/bin/java\" (not managed)."
+    jdkVers=("${jdkVers[@]}" $jdkVer)
+  fi
+done
 
-[ $((ls -L $jdkDir 2>&1) | grep -e "^jdk" | wc -l) -gt 0 ] && \
- for j in $((ls -L $jdkDir 2>&1) | grep -e "^jdk" | sort); do
-   jdkVer=$($jdkDir/$j/bin/java -version 2>&1 | grep -i version | cut -d '"' -f 2)
-   if [ "${#jdkVers[@]}" -gt 0 ] && [ $((echo "${jdkVers[*]}" | grep $jdkVer) | wc -l) -gt 0 ]; then
-     continue
-   elif [ "${#jdkVers[@]}" -gt 0 ]; then
-     echo -e "    ${jdkVer} has installed in \"$(echo $j | cut -d '-' -f 1)\" (not managed)."
-     jdkVers=("${jdkVers[@]}" $jdkVer)
-   else
-     jdkVers=($jdkVer)
-   fi
- done
+installSource=$(echo "1.${ver}.0_$(printf "%02d" $updateVer)" | sed -e 's/_00$//')
 
-if [ "${#jdkVers[@]}" -gt 0 ] && [ $((echo "${jdkVers[*]}" | grep "1.${ver}.0_${updateVer}") | wc -l) -gt 0 ]; then
+if [ "${#jdkVers[@]}" -gt 0 ] && [ $((echo "${jdkVers[*]} " | grep -e "${installSource} ") | wc -l) -gt 0 ]; then
   echo -e "\n  JDK ${nameOfVer} already installed."
-  installSource=jdk1.${ver}.0_${updateVer}
 elif [ $(($ver)) -lt 6 ]; then
-  downloadURL="${baseURL}/1.${ver}.0_${updateVer}/jdk-1_${ver}_0_${updateVer}-linux-amd64-rpm.bin"
-elif [ $(($buildVer)) -eq 0 ]; then
-  downloadURL="${baseURL}/${ver}u${updateVer}/jdk-${ver}u${updateVer}-linux-amd64-rpm.bin"
+  downloadURL="${baseURL}1.${ver}.0_$(printf "%02d" $updateVer)/jdk-1_${ver}_0_$(printf "%02d" $updateVer)-linux-amd64-rpm.bin"
+elif [ $(($ver)) -eq 6 ] && [ $(($updateVer)) -lt 4 ]; then
+  downloadURL="${baseURL}${ver}u${updateVer}/jdk-${ver}u${updateVer}-linux-amd64-rpm.bin"
 elif [ $(($ver)) -eq 6 ]; then
-  downloadURL="${baseURL}/${nameOfVer}/jdk-${ver}u${updateVer}-linux-x64-rpm.bin"
+  downloadURL="${baseURL}${nameOfVer}/jdk-${ver}u${updateVer}-linux-x64-rpm.bin"
 else
-  downloadURL="${baseURL}/${nameOfVer}/jdk-${ver}u${updateVer}-linux-x64.rpm"
+  downloadURL="${baseURL}${nameOfVer}/jdk-${ver}u${updateVer}-linux-x64.rpm"
 fi
+
+installSource="jdk${installSource}"
 
 [ -e $workDir ] || mkdir -p $workDir
 
 if [ $downloadURL ]; then
+  downloadURL=$((echo $downloadURL) | sed -e 's/u0//g' | sed -e 's/0_00/0/g')
   if [ $conflictVer ]; then
     installedVer=$((echo $conflictVer) | cut -d '.' -f 2)
     if [ $(($ver)) -gt $installedVer ]; then
       echo -e "\n    escaping previous version ..."
-      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk1.[0-$(($ver-1))]* >/dev/null 2>&1
+      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk$conflictVer >/dev/null 2>&1
     elif [ $(($ver)) -lt $installedVer ]; then
       echo -e "\n    newer version of JDK has installed."
       downloadURL=$((echo $downloadURL) | sed -e 's/-rpm//' | sed -e 's/\.rpm$/.tar.gz/')
+    elif [ $(($updateVer)) -gt 0 ] && [[ $conflictVer =~ \.0$ ]]; then
+      echo -e "\n    previous updated version of JDK ${ver} has installed.\n    escaping previous version ..."
+      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk$conflictVer >/dev/null 2>&1
     elif [ $(($updateVer)) -gt $((echo $conflictVer) | cut -d '_' -f 2) ]; then
       echo -e "\n    previous updated version of JDK ${ver} has installed.\n    escaping previous version ..."
-      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk1.$ver.0_[0-$(($updateVer-1))]* >/dev/null 2>&1
+      tar zcf $workDir/stealth.jdk.tar.gz $jdkDir/jdk$conflictVer >/dev/null 2>&1
     elif [ $(($updateVer)) -lt $((echo $conflictVer) | cut -d '_' -f 2) ]; then
       echo -e "\n    newly updated version of JDK ${ver} has installed."
       downloadURL=$((echo $downloadURL) | sed -e 's/-rpm//' | sed -e 's/\.rpm$/.tar.gz/')
@@ -203,8 +216,8 @@ if [ $downloadURL ]; then
    -o $workDir/$downloadSource
 
   if [ ! -e $workDir/$downloadSource ]; then
-    echo -e "\n  could not download JDK ${nameOfVer} (${downloadSource}).\n  check the version at:"
-    echo "http://www.oracle.com/technetwork/java/javase/downloads/"
+    echo -e "\n  could not download JDK ${nameOfVer} (${downloadSource}).\n\n  check the version at:"
+    echo "    http://www.oracle.com/technetwork/java/javase/downloads/"
     exit 1
   elif [[ "${downloadSource}" =~ \.bin$ ]]; then
     chmod +x $workDir/$downloadSource
@@ -213,39 +226,32 @@ if [ $downloadURL ]; then
     currentDir=`pwd`
     cd "${workDir}"
     if [[ "${downloadURL}" =~ rpm\.bin$ ]]; then
-      $workDir/$downloadSource -x >/dev/null 2>&1
-      installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "rpm$" | sed -e 's/.*\s//') 2>&1)
+      echo "yes" | $workDir/$downloadSource -x >/dev/null 2>&1
+      downloadSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "rpm$" | sed -e 's/.*\s//') 2>&1)
     else
-      $workDir/$downloadSource >/dev/null 2>&1
-      installSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "_${updateVer}\/$" | sed -e 's/.*\s//' | sed -e 's/\/$//') 2>&1)
+      echo "yes" | $workDir/$downloadSource >/dev/null 2>&1
     fi
     cd "${currentDir}"
   elif [[ "${downloadSource}" =~ \.tar\.gz$ ]]; then
     tar zxf $workDir/$downloadSource -C $workDir
-    installSource=$(tar ztf $workDir/$downloadSource | grep -e "_${updateVer}\/$" | sed -e "s/\/$//")
   fi
 
-  if [ -n "${workDir}" ] && [ -n "${installSource}" ] && [ -d $workDir/$installSource ]; then
+  if [ -n "${workDir}" ] && [ -d $workDir/$installSource ]; then
     echo -e "\n  Installing JDK ${nameOfVer} ..."
     if [ -d $workDir/$installSource ]; then
       cp -pR $workDir/$installSource $jdkDir/$installSource
     fi
-  elif [[ "${downloadSource}" =~ \.rpm$ ]]; then
-    echo -e "\n  Installing JDK ${nameOfVer} ..."
+  elif [ -n "${workDir}" ] && [ -e $workDir/$downloadSource ] && \
+       [[ "${downloadSource}" =~ \.rpm$ ]]; then
     yum install -y $workDir/$downloadSource >/dev/null 2>&1
-    installSource=jdk1.$ver.0_$updateVer
-  elif [[ "${installSource}" =~ \.rpm$ ]]; then
-    echo -e "\n  Installing JDK ${nameOfVer} ..."
-    yum install -y $workDir/$installSource >/dev/null 2>&1
-    installSource=jdk1.$ver.0_$updateVer
   fi
 
   if [ -n "${jdkDir}" ] && [ -n "${installSource}" ] && [ -e $jdkDir/$installSource ]; then
-    echo -e "\n  JDK ${nameOfVer} installed in \"${jdkDir}/jdk1.${ver}.0_${updateVer}\"."
+    echo -e "\n  JDK ${nameOfVer} installed in \"${jdkDir}/${installSource}\"."
     if [ "${#jdkVers[@]}" -gt 0 ]; then
-      jdkVers=("${jdkVers[@]}" "1.${ver}.0_${updateVer}")
+      jdkVers=("${jdkVers[@]}" $(echo $installSource | sed -e 's/^jdk//'))
     else
-      jdkVers=("1.${ver}.0_${updateVer}")
+      jdkVers=($(echo $installSource | sed -e 's/^jdk//'))
     fi
   else
     echo -e "\n  JDK ${nameOfVer} (${downloadSource}) install failed."
@@ -255,10 +261,11 @@ fi
 
 if [ -e $workDir/stealth.jdk.tar.gz ]; then
   echo -e "\n  restoring previous version ..."
-  tar zxf $workDir/stealth.jdk.tar.gz -C $jdkDir --strip=$(echo "$jdkDir" | sed -e 's/^\///' | sed -e 's/\//\n/g' | wc -l)
+  tar zxf $workDir/stealth.jdk.tar.gz -C $jdkDir \
+   --strip=$(echo "$jdkDir" | sed -e 's/^\///' | sed -e 's/\//\n/g' | wc -l)
 fi
 
-if [ $installSource ]; then
+if [ "${#jdkVers[@]}" -gt 0 ]; then
   for jdkVer in "${jdkVers[@]}"; do
     jVer=$(echo $jdkVer | cut -d '.' -f 2)
     if [ $((jVer)) -gt 6 ]; then
