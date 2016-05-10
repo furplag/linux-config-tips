@@ -30,8 +30,7 @@ declare embed=false
 # Usage
 usage(){
   cat << _EOT_
-${name}
-
+Name: ${name}
 Description:
   1. Install Oracle JDK.
   2. Does not remove previous version of JDK, if "yum update jdk" runs.
@@ -42,7 +41,7 @@ Requirement:
   1. root user executable only.
   2. Installable JDK version: 5 - 8.
 usgae: ${name} [-v jdkVersion] [-m]
-  -v : jdkVersion (optional, default : 8u92-b14)
+  -v : jdkVersion (optional, default : ${defaultVer})
        (1.)[version]
          5 : 5u22
          6 : 6u45-b06
@@ -71,7 +70,11 @@ done
 
 [ -n "${verStr}" ] || verStr=$defaultVer
 
-if [[ $verStr =~ ^(1\.)?[5-9]u[0-9]{1,2}(\-b[0-9]{1,2})?$ ]];then
+if [[ $verStr =~ ^(1\.)?6(u|\.0_)4(\-b12)?$ ]]; then
+  nameOfVer=6u4-b12
+elif [[ $verStr =~ ^(1\.)?6(u|\.0_)5(b)?$ ]]; then
+  nameOfVer=6u5b
+elif [[ $verStr =~ ^(1\.)?[5-9]u[0-9]{1,2}(\-b[0-9]{1,2})?$ ]]; then
   nameOfVer=$(echo $verStr | sed -e 's/^1\.//')
 elif [[ $verStr =~ ^(1\.)?[5-9]\.0_[0-9]{1,2}(\-b[0-9]{1,2})?$ ]]; then
   nameOfVer=$(echo $verStr | sed -e 's/^1\.//' | sed -e 's/\.0_/u/')
@@ -90,15 +93,19 @@ fi
 ver=$(echo $nameOfVer | sed -e 's/u.*//')
 updateVer=$(echo $nameOfVer | sed -e 's/.*u//' | sed -e 's/-.*//')
 
-if [ $(echo $nameOfVer | grep b | wc -l) -gt 0 ]; then
+if [ $(echo $nameOfVer | grep -E "b[0-9]{1,2}" | wc -l) -gt 0 ]; then
   buildVer=$(echo $nameOfVer | sed -e 's/.*b//')
 fi
 
 if [ $((ver)) -gt 5 ] && [ $(($buildVer)) -eq 0 ]; then
-  if [ $((ver)) -eq 6 ] && [ $((updateVer)) -gt 3 ]; then
-    usage; echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\"."; exit 1
+  if [ $((ver)) -eq 6 ] && [ $((updateVer)) -gt 10 ]; then
+    echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\".\n  see at:"
+    echo "http://www.oracle.com/technetwork/java/javase/downloads/"
+    exit 1
   elif [ $((ver)) -gt 6 ]; then
-    usage; echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\"."; exit 1
+    echo -e "\n  could not detect \"Build Version\" from variable: \"${verStr}\".\n  see at:"
+    echo "http://www.oracle.com/technetwork/java/javase/downloads/"
+    exit 1
   fi
 fi
 
@@ -196,7 +203,8 @@ if [ $downloadURL ]; then
    -o $workDir/$downloadSource
 
   if [ ! -e $workDir/$downloadSource ]; then
-    echo -e "\n  JDK ${nameOfVer} (${downloadSource}) download failed."
+    echo -e "\n  could not download JDK ${nameOfVer} (${downloadSource}).\n  check the version at:"
+    echo "http://www.oracle.com/technetwork/java/javase/downloads/"
     exit 1
   elif [[ "${downloadSource}" =~ \.bin$ ]]; then
     chmod +x $workDir/$downloadSource
@@ -347,5 +355,6 @@ fi
 
 echo -e "\n  cleanup ..."
 rm -rf $workDir >/dev/null 2>&1
+echo -e "\n  Done."
 
 exit 0
