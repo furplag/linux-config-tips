@@ -48,7 +48,7 @@ usgae: ${name} [-v jdkVersion] [-m]
          6 : 6u45-b06
          7 : 7u80-b15
          8 : 8u92-b14
-       (1.)[version].(0_)[updateVersion](-[build])
+       (1.)[version].0_[updateVersion](-b[build])
        [version]u[updateVersion]-b[build]
   -m : install maven (optional, default : false)
        JDK 5 : maven-2.2.1
