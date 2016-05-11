@@ -6,7 +6,7 @@ export LC_ALL=C
 declare -r name=`basename $0`
 declare -r datetime=`date +"%Y%m%d%H%M%S"`
 declare -r jdkDir=/usr/java
-declare -r workDir=$jdkDir/quickstart/$datetime
+declare -r workDir=$jdkDir/install.log/$datetime
 declare -r baseURL=https://edelivery.oracle.com/otn-pub/java/jdk/
 declare -r defaultVer=8u92-b14
 declare verStr=
@@ -157,6 +157,7 @@ if [ $((alternatives --display java 2>&1) | grep -e "\/bin\/java -" | grep -v -e
    alternatives --auto java >/dev/null 2>&1
    echo -e "\n    repare alternatives for java: \"$(echo `readlink -m /etc/alternatives/java`)\"."
 fi
+
 tmpVers=($(ls -L $jdkDir 2>&1 | grep -e "^jdk"))
 for j in "${tmpVers[@]}"; do
   jdkVer=$($jdkDir/$j/bin/java -version 2>&1 | grep -i version | cut -d '"' -f 2)
@@ -327,8 +328,8 @@ _EOT_
   done
 fi
 
-if [ $jdkDir ] && [ $installSource ] && [ -e $jdkDir/$installSource ]; then
-  if [ $downloadSource ]; then
+if [ -n "${jdkDir}" ] && [ -n "${installSource}" ] && [ -e $jdkDir/$installSource ]; then
+  if [ -n "${downloadSource}" ]; then
     echo -e "\n  Now complete to setting JDK ${nameOfVer}."
   else
     echo -e "\n  Now complete to setting alternatives for JDK ${nameOfVer}."
@@ -346,7 +347,7 @@ if [ $jdkDir ] && [ $installSource ] && [ -e $jdkDir/$installSource ]; then
   fi
   if [ -e /etc/profile.d/java.sh ]; then
     echo -e "\n  usage:\n    alternatives --config java && source /etc/profile"
-    echo -e "     - or -"
+    echo "     - or -"
     echo -e "    alternatives --set java ${jdkDir}/${installSource}/bin/java && \ \n     source /etc/profile"
   fi
   $maven && \
