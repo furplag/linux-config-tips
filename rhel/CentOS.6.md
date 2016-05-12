@@ -61,7 +61,6 @@ yum install -y epel-release \
   system-config-services \
   system-config-users \
   wget && \
-
  yum update -y --enablerepo=city-fan.org,epel,ius
 
 # Install open-vm-tools
