@@ -48,7 +48,20 @@ yum install -y epel-release \
  sed -i -e 's/enabled=1/enabled=0/g' /etc/yum.repos.d/city-fan.org.repo \
   /etc/yum.repos.d/epel* \
   /etc/yum.repos.d/ius* && \
- yum install -y file-roller firefox gedit git ntp wget && \
+ yum install -y \
+  file-roller \
+  firefox \
+  gedit \
+  git \
+  gnome-disk-utility \
+  gnome-utils \
+  ntp \
+  system-config-firewall \
+  system-config-lvm \
+  system-config-services \
+  system-config-users \
+  wget && \
+
  yum update -y --enablerepo=city-fan.org,epel,ius
 
 # Install open-vm-tools
