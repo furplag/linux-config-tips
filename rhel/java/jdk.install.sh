@@ -338,7 +338,7 @@ fi
 if [ ! -z $downloadURL ]; then
   downloadSource=$((echo $downloadURL) | sed -e 's/.*\///')
   echo -e "\nDownloading JDK ${nameOfVer} (${downloadSource}) ..."
-  curl -fjkL $downloadURL \
+  curl -fjkL -# $downloadURL \
    -H "Cookie: oraclelicense=accept-securebackup-cookie" \
    -o $workDir/$downloadSource
 
