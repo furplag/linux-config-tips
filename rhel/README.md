@@ -8,7 +8,7 @@
 
 ## Using Java
 
-#### Install Oracle JDK with "alternatives" 
+#### [Install Oracle JDK with "alternatives"](java/)
 
 * [Install Oracle JDK 6 with "alternatives"](java/jdk.6.md)
 * [Install Oracle JDK 7 with "alternatives"](java/jdk.7.md)
