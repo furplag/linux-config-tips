@@ -103,8 +103,10 @@ elif [ -z $verStr ] && [ $# -eq 1 ]; then
   verStr="${1}"
 elif [ -z $verStr ] && [ $# -eq 2 ] && [ "${1}" = "-m" ]; then
   verStr="${2}"
+  maven=true
 elif [ -z $verStr ] && [ $# -eq 2 ] && [ "${2}" = "-m" ]; then
   verStr="${1}"
+  maven=true
 fi
 
 # validate
