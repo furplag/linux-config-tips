@@ -338,7 +338,7 @@ fi
 if [ ! -z $downloadURL ]; then
   downloadSource=$((echo $downloadURL) | sed -e 's/.*\///')
   echo -e "\nDownloading JDK ${nameOfVer} (${downloadSource}) ..."
-  curl -fjkL -# $downloadURL \
+  curl -fjkL $downloadURL \
    -H "Cookie: oraclelicense=accept-securebackup-cookie" \
    -o $workDir/$downloadSource
 
@@ -357,9 +357,9 @@ if [ ! -z $downloadURL ]; then
       downloadSource=$(echo $(unzip -l $workDir/$downloadSource 2>/dev/null | grep jdk | grep -e "rpm$" | sed -e 's/.*\s//') 2>&1)
     else
       echo "yes" | $workDir/$downloadSource 1>/dev/null 2>&1
+      downloadSource=jdk${installVer}
     fi
     cd "${currentDir}"
-    downloadSource=jdk${installVer}
   elif [[ "${downloadSource}" =~ \.tar\.gz$ ]]; then
     tar zxf $workDir/$downloadSource -C $workDir
     downloadSource=jdk${installVer}
