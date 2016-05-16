@@ -175,9 +175,9 @@ fi
 echo -e "\nChecking installed JDK ..."
 
 # RPM
-finder=($(rpm -qa 2>&1 | grep -E "^jdk" | grep -E "\.x86_64" | sort | cut -d '-' -f 1,2))
+finder=($(rpm -qa 2>&1 | grep -E "^jdk" | grep -E "\.x86_64" | sort | cut -d '-' -f 1,2)) && \
 for found in "${finder[@]}"; do
-  [ -n $found ] || continue
+  [ ! -z $found ] || continue
   if javaHome=`rpm -ql $found | grep -E "\/bin\/java$" | grep -v -E "\/jre\/bin\/java$"`; then
     if installedVer=`"${javaHome}" -version 2>&1 | grep -i -E "java version" | cut -d '"' -f 2`; then
       if [ "${#javaHomes[@]}" -gt 0 ]; then
@@ -186,7 +186,7 @@ for found in "${finder[@]}"; do
       else
         javaHomes=($javaHome)
       fi
-      [ $ver -lt 7 ] || [[ $found =~ ^jdk\- ]] || continue
+      [ $ver -gt 7 ] && [[ $found =~ ^jdk[^\-] ]] && continue
       if [ "${#conflicts[@]}" -gt 0 ]; then
         echo " ${conflicts[@]} " | grep " ${javaHome} " >/dev/null && continue
         conflicts=("${conflicts[@]}" $javaHome)
@@ -210,9 +210,9 @@ for found in "${finder[@]}"; do
 done
 
 # alternatives
-finder=($(alternatives --display java 2>&1 | grep -e "\/bin\/java -" | grep -v openjdk | grep -v -E "\/jre(1\.[0-9]\.0(_[0-9]+)?)?\/bin\/java" | sort | sed -e 's/\-.*$//'))
+finder=($(alternatives --display java 2>&1 | grep -e "\/bin\/java -" | grep -v openjdk | grep -v -E "\/jre(1\.[0-9]\.0(_[0-9]+)?)?\/bin\/java" | sort | sed -e 's/\-.*$//')) && \
 for found in "${finder[@]}"; do
-  [ -n $found ] || continue
+  [ ! -z $found ] || continue
   [ -L $found ] && found=`readlink -m "${found}"`
   if [ -e $found ] && \
      installedVer=`"${found}" -version 2>&1 | grep -i -E "java version" | cut -d '"' -f 2`; then
@@ -231,7 +231,7 @@ for found in "${finder[@]}"; do
   fi
 done
 
-finder=($(alternatives --display java 2>&1 | grep -e "\/bin\/java -" | grep -v openjdk | sort | sed -e 's/\-.*$//'))
+finder=($(alternatives --display java 2>&1 | grep -e "\/bin\/java -" | grep -v openjdk | sort | sed -e 's/\-.*$//')) && \
 if [ "${#finder[@]}" -gt 0 ] && \
    ! readlink -e /etc/alternatives/java > /dev/null; then
    alternatives --auto java 1>/dev/null 2>&1
@@ -239,9 +239,9 @@ if [ "${#finder[@]}" -gt 0 ] && \
 fi
 
 # install directory (default: /usr/java)
-finder=($(ls -L $jdkDir 2>&1 | grep -e "^jdk" | sort))
+finder=($(ls -L $jdkDir 2>&1 | grep -e "^jdk" | sort)) && \
 for found in "${finder[@]}"; do
-  [ -n $found ] || continue
+  [ ! -z $found ] || continue
   found="${jdkDir}/${found}/bin/java"
   if javaHome=`readlink -e "${found}"`; then
     if installedVer=`$javaHome -version 2>&1 | grep -i -E "java version" | cut -d '"' -f 2`; then
@@ -264,6 +264,7 @@ for found in "${finder[@]}"; do
 done
 
 # already installed
+[ "${#javaHomes[@]}" -gt 0 ] && \
 for javaHome in "${javaHomes[@]}"; do
   [ ! -z $downloadURL ] || break
   if $javaHome -version 2>&1 | grep -i -E "java version" | grep $installVer > /dev/null; then
@@ -284,9 +285,12 @@ if [ ! -z $downloadURL ] && [ "${#conflicts[@]}" -gt 0 ]; then
     [ "${#finder[@]}" -gt 0 ] && echo " ${finder[@]} " | grep " ${conflictJDK} " >/dev/null && continue
     conflictFVer=`$conflict -version 2>&1 | grep -i -E "java version" | cut -d '"' -f 2` || continue
     conflictVer=`echo $conflictFVer | cut -d '.' -f 2`
+    [ $((ver)) -gt 7 ] && continue
+    [ $((conflictVer)) -gt 7 ] && continue
     echo $conflictFVer | grep _ >/dev/null && conflictUVer=`echo $conflictFVer | cut -d '_' -f 2`
     [ -n $conflictUVer ] || conflictUVer=0
     if [ $((conflictVer)) -gt $ver ]; then
+      [[ "${downloadURL}" =~ \.tar\.gz$ ]] && continue
       echo "  newer version of JDK has installed."
       downloadURL=`echo $downloadURL | sed -e 's/\-rpm//' | sed -e 's/\.rpm$/.tar.gz/'`
     elif [ $((conflictVer)) -lt $ver ]; then
@@ -297,6 +301,7 @@ if [ ! -z $downloadURL ] && [ "${#conflicts[@]}" -gt 0 ]; then
         finder=("${conflictJDK}")
       fi
     elif [ $((conflictUVer)) -gt $updateVer ]; then
+      [[ "${downloadURL}" =~ \.tar\.gz$ ]] && continue
       echo "  newly updated version of JDK ${ver} has installed."
       downloadURL=`echo $downloadURL | sed -e 's/\-rpm//' | sed -e 's/\.rpm$/.tar.gz/'`
     elif [ $((conflictUVer)) -lt $updateVer ]; then
@@ -310,6 +315,7 @@ if [ ! -z $downloadURL ] && [ "${#conflicts[@]}" -gt 0 ]; then
       continue
     fi
   done
+
   if [ "${#finder[@]}" -gt 0 ]; then
     echo -n "  escaping previous version(s) "
     for found in "${finder[@]}"; do
@@ -351,6 +357,7 @@ if [ ! -z $downloadURL ]; then
       echo "yes" | $workDir/$downloadSource 1>/dev/null 2>&1
     fi
     cd "${currentDir}"
+    downloadSource=jdk${installVer}
   elif [[ "${downloadSource}" =~ \.tar\.gz$ ]]; then
     tar zxf $workDir/$downloadSource -C $workDir
     downloadSource=jdk${installVer}
@@ -377,6 +384,7 @@ if [ ! -z $downloadURL ]; then
       javaHomes=("${jdkDir}/jdk${installVer}/bin/java")
     fi
   else
+    echo "[${$jdkDir}/jdk${installVer}]"
     echo -e "\n  JDK ${nameOfVer} (${downloadSource}) install failed."
     exit 1
   fi
