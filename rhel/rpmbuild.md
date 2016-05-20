@@ -20,7 +20,7 @@
 
 ```bash
 ### create directory
-$ rpmbuild setuptree
+$ rpmdev-setuptree
 
 ### modify macros to ignore debugging resources.
 $ echo -e "\n%debug_package %{nil}\n" >> $HOME/.rpmmacros
