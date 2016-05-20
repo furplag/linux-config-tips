@@ -7,7 +7,7 @@
 
 ### Install Packages
 ```bash
-# yum install -y mock rpm-build yum-utils
+# yum install -y mock rpmdevtools rpm-build yum-utils
 ```
 
 ### Create "mock" user.
@@ -26,10 +26,16 @@ $ rpmbuild setuptree
 $ echo -e "\n%debug_package %{nil}\n" >> $HOME/.rpmmacros
 
 ### extract source-package.
-rpm -ivh [path-to-source-rpm.src.rpm]
+$ rpm -ivh [path-to-source-rpm.src.rpm]
 
 ### building Package.
-rpmbuild -bs ~/rpmbuild/SPECS/[spec-file-of-rpm.spec]
+$ rpmbuild -bs ~/rpmbuild/SPECS/[spec-file-of-rpm.spec]
 
-### 
+### retrieve dependencies.
+$ sudo yum-builddep -y ~/rpmbuild/SRPMS/[errord-rpm].src.rpm
+
+### then re-build
+$ rpmbuild --rebuild ~/rpmbuild/SRPMS/[errord-rpm].src.rpm
+
+### build out RPMs in rpmbuild/RPMS/[arch] directory.
 ```
