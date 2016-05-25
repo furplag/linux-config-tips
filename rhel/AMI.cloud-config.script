@@ -1,4 +1,6 @@
 #!/bin/bash
+echo -e "@_@ update packages"
+yum update -y
 
 echo -e "@_@ system:rootenable"
 sed -i -e 's/PermitRootLogin forced\-commands-only/PermitRootLogin without\-password/g' /etc/ssh/sshd_config
@@ -18,10 +20,12 @@ KEYBOARDTYPE="pc"
 
 _EOT_
 
-sed -i -e 's/^./#\0/' -e '1i\ZONE="Asia\/Tokyo"\nUTC=FALSE' /etc/sysconfig/clock
+mv /etc/localtime /etc/localtime.origin && ln -s /usr/share/Zoneinfo/Asia/Tokyo /etc/localtime
+sed -i -e 's/^./#\0/' -e '1i\ZONE="Asia\/Tokyo"\nUTC=TRUE' /etc/sysconfig/clock
 
 sed -i -e "$(echo $(cat /etc/ntp.conf | grep -n -e "^server" | sed -n '$p' | sed -e 's/:.*//'))a\server -4 ntp.nict.jp iburst\nserver 127.127.1.0\nfudge 127.127.1.0 stratum 10\n" \
 /etc/ntp.conf
+servicentpd restart
 
 echo -e "@_@ repositories"
 yum install -y epel-release \
@@ -33,6 +37,3 @@ sed -i -e 's/enabled=1/enabled=0/' -e 's/\]/\0\npriority=10/' /etc/yum.repos.d/{
 cp -p /etc/yum.repos.d/nginx.repo /etc/yum.repos.d/nginx-mainline.repo
 sed -i -e 's/\/packages\//\0mainline\//g' /etc/yum.repos.d/nginx-mainline.repo && \
 sed -i -e 's/\[nginx\]/\[nginx\-mainline\]/g' /etc/yum.repos.d/nginx-mainline.repo
-
-echo -e "@_@ update packages"
-yum update -y
