@@ -32,8 +32,7 @@ yum install -y epel-release \
 http://www.city-fan.org/ftp/contrib/yum-repo/city-fan.org-release-1-13.rhel6.noarch.rpm \
 https://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-14.ius.el6.noarch.rpm \
 http://nginx.org/packages/rhel/6/noarch/RPMS/nginx-release-rhel-6-0.el6.ngx.noarch.rpm && \
-sed -i -e 's/enabled=1/enabled=0/' -e 's/\]/\0\npriority=10/' /etc/yum.repos.d/{city-fan.org,epel,ius,nginx}*.repo
+sed -i -e 's/enabled=1/enabled=0/' -e 's/\]/\0\npriority=10/' -e 's/\$releasever/6/g' /etc/yum.repos.d/{city-fan.org,epel,ius,nginx}*.repo
 [ -e /etc/yum.repos.d/nginx.repo ] && \
 cp -p /etc/yum.repos.d/nginx.repo /etc/yum.repos.d/nginx-mainline.repo
-sed -i -e 's/\/packages\//\0mainline\//g' /etc/yum.repos.d/nginx-mainline.repo && \
-sed -i -e 's/\[nginx\]/\[nginx\-mainline\]/g' /etc/yum.repos.d/nginx-mainline.repo
+sed -i -e 's/\/packages\//\0mainline\//g' -e 's/\[nginx\]/\[nginx\-mainline\]/g' /etc/yum.repos.d/nginx-mainline.repo
