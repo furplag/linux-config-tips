@@ -38,7 +38,29 @@ sed -i -e 's/gpgchek=[01]/gpgcheck=1\ngpgkey=file:\/\/\/etc\/pki\/rpm\-gpg\/RPM-
 cp -p /etc/yum.repos.d/nginx.repo /etc/yum.repos.d/nginx-mainline.repo && \
 sed -i -e 's/\/packages\//\0mainline\//g' -e 's/\[nginx\]/\[nginx\-mainline\]/g' /etc/yum.repos.d/nginx-mainline.repo
 
+curl -L https://raw.githubusercontent.com/furplag/linux-config-tips/yum-repo/RPM-GPG-KEY-furplag.github.io \
+-o /etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
 
+cat << _EOT_ > /etc/yum.repos.d/furplag.github.io.repo
+[furplag.github.io]
+name=Packages only for me own.
+baseurl=https://raw.githubusercontent.com/furplag/linux-config-tips/yum-repo/rhel/6/x86_64
+priority=10
+failovermethod=priority
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
+
+[furplag.github.io-source]
+name=Packages only for me own.
+baseurl=https://raw.githubusercontent.com/furplag/linux-config-tips/yum-repo/rhel/6/source
+priority=10
+failovermethod=priority
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
+
+_EOT_
 
 echo -e "@_@ packages"
 yum install -y git
