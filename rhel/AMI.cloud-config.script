@@ -60,7 +60,39 @@ enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
 
+[furplag.github.io-amzn]
+name=Packages only for me own.
+baseurl=https://raw.githubusercontent.com/furplag/linux-config-tips/yum-repo/ami/x86_64
+priority=10
+failovermethod=priority
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
+
+[furplag.github.io-amzn-source]
+name=Packages only for me own.
+baseurl=https://raw.githubusercontent.com/furplag/linux-config-tips/yum-repo/ami/source
+priority=10
+failovermethod=priority
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
+
 _EOT_
 
-echo -e "@_@ packages"
+echo -e "@_@ packages: git"
 yum install -y git
+
+echo -e "@_@ packages: OpenSSL 1.0.2"
+yum install -y openssl-1.0.2h --enablerepo=furplag.github.io
+
+echo -e "@_@ packages: nghttp2"
+yum install -y nghttp2 --enablerepo=epel
+
+echo -e "@_@ curl: HTTP/2.0 enabled"
+yum install -y curl libcurl --enablerepo=furplag.github.io-amzn,city-fan.org
+
+
+echo -e "@_@ openssl: Apache HTTP/2.0"
+yum install -y apr15u apr15u-util --enablerepo=ius
+yum install -y httpd24u mod24u_session mod24u_ssl --enablerepo=furplag.github.io
