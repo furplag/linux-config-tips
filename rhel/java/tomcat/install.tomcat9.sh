@@ -39,10 +39,6 @@ ln -s /var/log/tomcat9 /usr/share/tomcat9/logs
 mkdir /var/cache/tomcat9
 chown root:tomcat -R /var/cache/tomcat9/
 chmod 770 /var/cache/tomcat9
-mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
-mv /usr/share/tomcat9/work /var/cache/tomcat9/work
-ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
-ln -s /var/cache/tomcat9/work /usr/share/tomcat9/work
 
 mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
@@ -233,3 +229,15 @@ WantedBy=multi-user.target
 _EOT_
 chmod 644 /usr/lib/systemd/system/tomcat9@.service
 
+yum install -y apr15u-devel gcc openssl-devel --enablerepo=ius,furplag.github.io
+
+tar xf /usr/share/tomcat9/bin/tomcat-native.tar.gz -C /usr/local/src
+cd /usr/local/src/tomcat-native-1.2.7-src/native/
+
+.configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--with-java-home=/usr/java/latest \
+--with-apr=/usr/bin/apr15u-1-config \
+--with-ssl=/usr/include/openssl && \
+make && make install
