@@ -31,24 +31,18 @@ chown root:tomcat /etc/tomcat9/Catalina/localhost
 chmod 775 /etc/tomcat9/Catalina
 chmod 775 /etc/tomcat9/Catalina/localhost
 
-chown root:tomcat -R /usr/share/tomcat9/{logs,temp,work}
-chmod 770 /usr/share/tomcat9/{logs,temp,work}
+chown tomcat:tomcat -R /usr/share/tomcat9/{logs,temp,work}
+chmod 775 /usr/share/tomcat9/{logs,temp,work}
 mv /usr/share/tomcat9/logs /var/log/tomcat9
 ln -s /var/log/tomcat9 /usr/share/tomcat9/logs
 
 mkdir /var/cache/tomcat9
 chown root:tomcat -R /var/cache/tomcat9/
 chmod 770 /var/cache/tomcat9
-chown tomcat:tomcat /usr/share/tomcat9/work/Catalina/localhost
-chmod 775 /usr/share/tomcat9/work/Catalina/localhost
 mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
 mv /usr/share/tomcat9/work /var/cache/tomcat9/work
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
 ln -s /var/cache/tomcat9/work /usr/share/tomcat9/work
-
-mkdir /var/lib/tomcat9
-chown root:tomcat /var/lib/tomcat9
-chmod 775 /var/lib/tomcat9
 
 mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
