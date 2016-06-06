@@ -11,17 +11,21 @@ mv /usr/share/apache-tomcat-9.0.0.M6 /usr/share/tomcat9
 chown root:tomcat -R /usr/share/tomcat9/
 chown root:tomcat -R /usr/share/tomcat9/*
 
-mv /usr/share/tomcat9/conf /etc/tomcat9/conf
-ln -s /etc/tomcat9/conf /usr/share/tomcat9/conf
+mv /usr/share/tomcat9/conf /etc/tomcat9
+ln -s /etc/tomcat9 /usr/share/tomcat9/conf
+mkdir /etc/tomcat9/Catalina
+mkdir /etc/tomcat9/Catalina/localhost
+chown root:tomcat /etc/tomcat9/Catalina
+chown root:tomcat /etc/tomcat9/Catalina/localhost
 
 mv /usr/share/tomcat9/logs /var/log/tomcat9
 ln -s /var/log/tomcat9 /usr/share/tomcat9/logs
 
 mkdir /var/cache/tomcat9
 chown root:tomcat -R /var/cache/tomcat9/
-mv /usr/share/tomcat9/temp var/cache/tomcat9/temp
+mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
-mv /usr/share/tomcat9/work var/cache/tomcat9/work
+mv /usr/share/tomcat9/work /var/cache/tomcat9/work
 ln -s /var/cache/tomcat9/work /usr/share/tomcat9/work
 
 mkdir /var/lib/tomcat9
@@ -33,11 +37,6 @@ chown root:tomcat /var/lib/tomcat9s
 
 > /var/run/tomcat9.pid
 chown root:tomcat /var/run/tomcat9.pid
-
-mkdir /etc/tomcat9/Catalina
-mkdir /etc/tomcat9/Catalina/localhost
-chown root:tomcat /etc/tomcat9/Catalina
-chown root:tomcat /etc/tomcat9/Catalina/localhost
 
 cat <<_EOT_> /etc/sysconfig/tomcat9
 # Service-specific configuration file for tomcat. This will be sourced by
