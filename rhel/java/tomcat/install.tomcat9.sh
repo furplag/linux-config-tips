@@ -39,6 +39,8 @@ ln -s /var/log/tomcat9 /usr/share/tomcat9/logs
 mkdir /var/cache/tomcat9
 chown root:tomcat -R /var/cache/tomcat9/
 chmod 770 /var/cache/tomcat9
+chown tomcat:tomcat /usr/share/tomcat9/work/Catalina/localhost
+chmod 775 /usr/share/tomcat9/work/Catalina/localhost
 mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
 mv /usr/share/tomcat9/work /var/cache/tomcat9/work
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
@@ -192,7 +194,7 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-EnvironmentFile=/etc/tomcat/tomcat9.conf
+EnvironmentFile=/etc/tomcat9/tomcat9.conf
 Environment="NAME="
 EnvironmentFile=-/etc/sysconfig/tomcat9
 ExecStart=/usr/share/tomcat9/bin/startup.sh
