@@ -224,7 +224,7 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-EnvironmentFile=/etc/tomcat/tomcat9.conf
+EnvironmentFile=/etc/tomcat9/tomcat9.conf
 Environment="NAME=%I"
 EnvironmentFile=-/etc/sysconfig/tomcat9@%I
 ExecStart=/usr/share/tomcat9/bin/startup.sh
