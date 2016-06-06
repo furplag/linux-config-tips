@@ -2,8 +2,8 @@
 releasever=7
 
 yum install -y epel-release \
-"http://www.city-fan.org/ftp/contrib/yum-repo/city-fan.org-release-1-13.rhel\${releasever}.noarch.rpm" \
-"https://dl.iuscommunity.org/pub/ius/stable/Redhat/\${releasever}/x86_64/ius-release-1.0-14.ius.el\${releasever}.noarch.rpm"
+"http://www.city-fan.org/ftp/contrib/yum-repo/city-fan.org-release-1-13.rhel${releasever}.noarch.rpm" \
+"https://dl.iuscommunity.org/pub/ius/stable/Redhat/${releasever}/x86_64/ius-release-1.0-14.ius.el${releasever}.noarch.rpm"
 
 sed -i -e 's/enabled=1/enabled=0/' /etc/yum.repos.d/{city-fan.org,epel,ius}*.repo
 
