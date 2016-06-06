@@ -37,5 +37,3 @@ yum install libmetalink libpsl libssh2 --enablerepo=city-fan.org
 yum install curl libcurl --enablerepo=furplag.github.io
 yum install -y apr15u apr15u-util --enablerepo=ius
 yum install -y httpd24u mod24u_ssl --enablerepo=furplag.github.io
-
-_EOT_
