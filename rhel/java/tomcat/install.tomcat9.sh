@@ -10,6 +10,13 @@ mv /usr/share/apache-tomcat-9.0.0.M6 /usr/share/tomcat9
 chown root:tomcat -R /usr/share/tomcat9/
 chmod 775 /usr/share/tomcat9/
 
+chown tomcat:tomcat /usr/share/tomcat9/bin
+chown tomcat:tomcat /usr/share/tomcat9/bin/*
+rm -rf /usr/share/tomcat9/bin/*.bat
+
+chown tomcat:tomcat /usr/share/tomcat9/lib
+chown tomcat:tomcat /usr/share/tomcat9/lib/*
+
 chown root:tomcat -R /usr/share/tomcat9/conf
 chmod 755 /usr/share/tomcat9/conf
 mv /usr/share/tomcat9/conf /etc/tomcat9
