@@ -1,3 +1,5 @@
+#!/bin/bash
+
 useradd -u 91 tomcat -U -r -s /sbin/nologin
 
 curl -fjkLO http://www-us.apache.org/dist/tomcat/tomcat-9/v9.0.0.M6/bin/apache-tomcat-9.0.0.M6.tar.gz
