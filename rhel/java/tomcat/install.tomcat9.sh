@@ -62,6 +62,21 @@ chmod 755 /var/lib/tomcats
 touch /var/run/tomcat9.pid
 chown tomcat:tomcat /var/run/tomcat9.pid
 
+sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat9/webapps/{host-manager,manager}/META-INF/context.xml
+sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat9/conf/tomcat-users.xml
+cat <<_EOT_>> /usr/share/tomcat9/conf/tomcat-users.xml
+  <role rolename="admin-gui" />
+  <role rolename="admin-script" />
+  <role rolename="manager-gui" />
+  <role rolename="manager-jmx" />
+  <role rolename="manager-script" />
+  <role rolename="manager-status" />
+  <user username="tomcat" password="tomcat" roles="admin-gui,manager-gui" />
+</tomcat-users>
+
+_EOT_
+
+
 cat <<_EOT_> /etc/sysconfig/tomcat9
 # Service-specific configuration file for tomcat. This will be sourced by
 # the SysV init script after the global configuration file
