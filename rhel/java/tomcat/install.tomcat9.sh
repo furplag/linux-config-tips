@@ -234,7 +234,7 @@ yum install -y apr15u-devel gcc openssl-devel --enablerepo=ius,furplag.github.io
 tar xf /usr/share/tomcat9/bin/tomcat-native.tar.gz -C /usr/local/src
 cd /usr/local/src/tomcat-native-1.2.7-src/native/
 
-.configure \
+./configure \
 --prefix=/usr \
 --libdir=/usr/lib64 \
 --with-java-home=/usr/java/latest \
