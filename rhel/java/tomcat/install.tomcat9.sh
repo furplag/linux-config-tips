@@ -1,66 +1,45 @@
 #!/bin/bash
 
-useradd -u 91 tomcat -U -r -s /sbin/nologin
+grep -e "^tomcat" /etc/passwd || useradd -u 91 tomcat -U -s /sbin/nologin
 
 curl -fjkLO http://www-us.apache.org/dist/tomcat/tomcat-9/v9.0.0.M6/bin/apache-tomcat-9.0.0.M6.tar.gz
 
 tar xf apache-tomcat-9.0.0.M6.tar.gz -C /usr/share
 mv /usr/share/apache-tomcat-9.0.0.M6 /usr/share/tomcat9
 
-chown root:tomcat -R /usr/share/tomcat9/
-chmod 775 /usr/share/tomcat9/
-
-chown tomcat:tomcat /usr/share/tomcat9/bin
-chown tomcat:tomcat /usr/share/tomcat9/bin/*
+mkdir -p /usr/share/tomcat9/conf/Catalina/localhost
+chown tomcat:tomcat -R /usr/share/tomcat9
+chmod 775 -R /usr/share/tomcat9
 rm -rf /usr/share/tomcat9/bin/*.bat
+rm -rf /usr/share/tomcat9/{temp,work}
+chown tomcat:root -R /usr/share/tomcat9/conf
+chmod 664 -R /usr/share/tomcat9/conf
+chmod 660 /usr/share/tomcat9/conf/tomcat-users.xml
 
-chown tomcat:tomcat /usr/share/tomcat9/lib
-chown tomcat:tomcat /usr/share/tomcat9/lib/*
-
-chown root:tomcat -R /usr/share/tomcat9/conf
-chmod 755 /usr/share/tomcat9/conf
 mv /usr/share/tomcat9/conf /etc/tomcat9
 ln -s /etc/tomcat9 /usr/share/tomcat9/conf
-chown tomcat:root -R /etc/tomcat9/*
-chmod 664 /etc/tomcat9/*
-chmod 660 /etc/tomcat9/tomcat-users.xml
-
-mkdir -p /etc/tomcat9/Catalina/localhost
-chown root:tomcat /etc/tomcat9/Catalina
-chown root:tomcat /etc/tomcat9/Catalina/localhost
-chmod 775 /etc/tomcat9/Catalina
-chmod 775 /etc/tomcat9/Catalina/localhost
-
-chown tomcat:tomcat -R /usr/share/tomcat9/{logs,temp,work}
-chmod 775 /usr/share/tomcat9/{logs,temp,work}
 mv /usr/share/tomcat9/logs /var/log/tomcat9
 ln -s /var/log/tomcat9 /usr/share/tomcat9/logs
 
-mkdir /var/cache/tomcat9
-chown root:tomcat -R /var/cache/tomcat9/
-chmod 770 /var/cache/tomcat9
-
-mv /usr/share/tomcat9/temp /var/cache/tomcat9/temp
+mkdir -p /var/cache/tomcat9/{temp,work}
+chown tomcat:tomcat -R /var/cache/tomcat9
+chmod 770 -R /var/cache/tomcat9
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
-mv /usr/share/tomcat9/work /var/cache/tomcat9/work
 ln -s /var/cache/tomcat9/work /usr/share/tomcat9/work
 
-mkdir /var/lib/tomcat9
-chown root:tomcat /var/lib/tomcat9
-chmod 755 /var/lib/tomcat9
-
-chown root:tomcat /usr/share/tomcat9/webapps
-chmod 775 /usr/share/tomcat9/webapps
-chown tomcat:tomcat -R /usr/share/tomcat9/webapps/*
+mkdir -p /var/lib/tomcat9
 mv /usr/share/tomcat9/webapps /var/lib/tomcat9/webapps
+chown tomcat:tomcat /var/lib/tomcat9
+chmod 775 -R /var/lib/tomcat9
 ln -s /var/lib/tomcat9/webapps /usr/share/tomcat9/webapps
 
-mkdir /var/lib/tomcats
-chown root:tomcat /var/lib/tomcats
-chmod 755 /var/lib/tomcats
+mkdir -p /var/lib/tomcats
+chown tomcat:tomcat /var/lib/tomcats
+chmod 775 /var/lib/tomcats
 
 touch /var/run/tomcat9.pid
 chown tomcat:tomcat /var/run/tomcat9.pid
+chmod 664 /var/run/tomcat9.pid
 
 sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat9/webapps/{host-manager,manager}/META-INF/context.xml
 sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat9/conf/tomcat-users.xml
