@@ -1,17 +1,72 @@
 #!/bin/bash
 
-grep -e "^tomcat" /etc/passwd || useradd -u 91 tomcat -U -s /sbin/nologin
+systemctl status tomcat8 >/dev/null && exit 0
+
+grep -e "^tomcat" /etc/passwd || useradd -u 91 tomcat -U -r -s /sbin/nologin
+
+yum install -y automake gcc
+if ! ls /usr/lib64 | grep tcnative >/dev/null; then
+  yum install -y apr15u-devel --enablerepo=ius
+  yum install -y openssl-devel --enablerepo=furplag.github.io
+
+  tar xf /usr/share/tomcat9/bin/tomcat-native.tar.gz -C /tmp
+  tar xf /usr/share/tomcat9/bin/commons-daemon-native.tar.gz -C /tmp
+  cd /tmp/tomcat-native-1.2.7-src/native
+  
+  ./configure \
+  --prefix=/usr \
+  --libdir=/usr/lib64 \
+  --with-java-home=/usr/java/latest \
+  --with-apr=/usr/bin/apr15u-1-config \
+  --with-ssl=/usr/include/openssl && \
+  make && make install
+fi
 
 curl -fjkLO http://ftp.meisei-u.ac.jp/mirror/apache/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
 
 tar xf apache-tomcat-8.0.35.tar.gz -C /usr/share
 mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat8
 
+currentDir=`pwd`
+
+tar xf /usr/share/tomcat9/bin/tomcat-native.tar.gz -C /tmp
+tar xf /usr/share/tomcat9/bin/commons-daemon-native.tar.gz -C /tmp
+cd /tmp/tomcat-native-1.2.7-src/native
+
+./configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--with-java-home=/usr/java/latest \
+--with-apr=/usr/bin/apr15u-1-config \
+--with-ssl=/usr/include/openssl && \
+make && make install
+
+cd /tmp/commons-daemon-1.0.15-native-src/unix
+
+./configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--with-java=/usr/java/latest && \
+make
+
+mkdir -p /usr/java/commons-daemon-1.0.15-native
+mv jsvc /usr/java/commons-daemon-1.0.15-native/jsvc
+chmod +x /usr/java/commons-daemon-1.0.15-native/jsvc 1015
+
+alternatives --install /usr/bin/jsvc jsvc /usr/java/commons-daemon-1.0.15-native/jsvc 1015
+
+mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
+chown root:tomcat -R /usr/share/tomcat8
+chmod 775 -R /usr/share/tomcat8
+rm -rf /usr/share/tomcat8/bin/*.bat
+rm -rf /usr/share/tomcat8/{logs,temp,work}
+
+# bin
+
+
 mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
 chown tomcat:tomcat -R /usr/share/tomcat8
 chmod 775 -R /usr/share/tomcat8
-rm -rf /usr/share/tomcat8/bin/*.bat
-rm -rf /usr/share/tomcat8/{temp,work}
 chown tomcat:root -R /usr/share/tomcat8/conf
 chmod 664 -R /usr/share/tomcat8/conf
 chmod 660 /usr/share/tomcat8/conf/tomcat-users.xml
