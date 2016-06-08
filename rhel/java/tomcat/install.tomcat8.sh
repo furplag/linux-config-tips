@@ -21,8 +21,7 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   --with-java-home=/usr/java/latest \
   --with-apr=/usr/bin/apr15u-1-config \
   --with-ssl=/usr/include/openssl && \
-  make && make install
-
+  make && make install && \
   cd "${currentDir}"  
   rm -rf /tmp/tomcat-native-1.2.7-src
 fi
@@ -38,8 +37,7 @@ cd /tmp/commons-daemon-1.0.15-native-src/unix
 --prefix=/usr \
 --libdir=/usr/lib64 \
 --with-java=/usr/java/latest && \
-make
-
+make && \
 cd "${currentDir}"
 cp /tmp/commons-daemon-1.0.15-native-src/unix/jsvc /usr/share/tomcat8/bin/jsvc
 rm -rf /tmp/commons-daemon-1.0.15-native-src/unix/jsvc 
