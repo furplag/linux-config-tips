@@ -2,12 +2,12 @@
 
 grep -e "^tomcat" /etc/passwd || useradd -u 91 tomcat -U -s /sbin/nologin
 
-curl -fjkLO http://ftp.meisei-u.ac.jp/mirror/apache/dist/tomcat/tomcat-8/v8.5.2/bin/apache-tomcat-8.5.2.tar.gz
+curl -fjkLO http://ftp.meisei-u.ac.jp/mirror/apache/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
 
-tar xf apache-tomcat-8.5.2.tar.gz -C /usr/share
-mv /usr/share/apache-tomcat-8.5.2 /usr/share/tomcat8
+tar xf apache-tomcat-8.0.35.tar.gz -C /usr/share
+mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat8
 
-mkdir -p /usr/share/tomcat9/conf/Catalina/localhost
+mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
 chown tomcat:tomcat -R /usr/share/tomcat8
 chmod 775 -R /usr/share/tomcat8
 rm -rf /usr/share/tomcat8/bin/*.bat
@@ -41,9 +41,13 @@ touch /var/run/tomcat8.pid
 chown tomcat:tomcat /var/run/tomcat8.pid
 chmod 664 /var/run/tomcat8.pid
 
-sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat9/webapps/{host-manager,manager}/META-INF/context.xml
-sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat9/conf/tomcat-users.xml
-cat <<_EOT_>> /usr/share/tomcat9/conf/tomcat-users.xml
+# ---
+exit 0
+# ---
+
+sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat8/webapps/{host-manager,manager}/META-INF/context.xml
+sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat8/conf/tomcat-users.xml
+cat <<_EOT_>> /usr/share/tomcat8/conf/tomcat-users.xml
   <role rolename="admin-gui" />
   <role rolename="admin-script" />
   <role rolename="manager-gui" />
