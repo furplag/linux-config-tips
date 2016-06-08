@@ -28,74 +28,71 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
 fi
 
 curl -fjkL http://ftp.meisei-u.ac.jp/mirror/apache/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz \
--o /
-tar xf apache-tomcat-8.0.35.tar.gz -C /usr/share
+-o /tmp/apache-tomcat-8.0.35.tar.gz
+tar xf /tmp/apache-tomcat-8.0.35.tar.gz -C /usr/share
 mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat8
 
 tar xf /usr/share/tomcat8/bin/commons-daemon-native.tar.gz -C /tmp
 cd /tmp/commons-daemon-1.0.15-native-src/unix
-
 ./configure \
 --prefix=/usr \
 --libdir=/usr/lib64 \
 --with-java=/usr/java/latest && \
 make
 
-cd "${currentDir}"  
-mv /tmp/commons-daemon-1.0.15-native-src/unix/jsvc 
-
-mkdir -p /usr/java/commons-daemon-1.0.15-native
-mv jsvc /usr/java/commons-daemon-1.0.15-native/jsvc
-chmod +x /usr/java/commons-daemon-1.0.15-native/jsvc 1015
-
-alternatives --install /usr/bin/jsvc jsvc /usr/java/commons-daemon-1.0.15-native/jsvc 1015
+cd "${currentDir}"
+cp /tmp/commons-daemon-1.0.15-native-src/unix/jsvc /usr/share/tomcat8/bin/jsvc
+rm -rf /tmp/commons-daemon-1.0.15-native-src/unix/jsvc 
 
 mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
 chown root:tomcat -R /usr/share/tomcat8
 chmod 775 -R /usr/share/tomcat8
-rm -rf /usr/share/tomcat8/bin/*.bat
 rm -rf /usr/share/tomcat8/{logs,temp,work}
 
 # bin
+rm -rf /usr/share/tomcat8/bin/*.bat
+chmod +x /usr/share/tomcat8/bin/jsvc
+chmod 0664 /usr/share/tomcat8/bin/*.*
 
-
-mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
-chown tomcat:tomcat -R /usr/share/tomcat8
-chmod 775 -R /usr/share/tomcat8
-chown tomcat:root -R /usr/share/tomcat8/conf
-chmod 664 -R /usr/share/tomcat8/conf
-chmod 660 /usr/share/tomcat8/conf/tomcat-users.xml
-
+#conf
+chown tomcat:tomcat /usr/share/tomcat8/conf/*.*
+chmod 0664 /usr/share/tomcat8/conf/*.*
+chmod 0660 /usr/share/tomcat8/conf/tomcat-users.xml
 mv /usr/share/tomcat8/conf /etc/tomcat8
 ln -s /etc/tomcat8 /usr/share/tomcat8/conf
+
+mkdir -p /var/log/tomcat8
+chown /var/log/tomcat8
+chmod 0770 /var/log/tomcat8
+
+#logs
 mv /usr/share/tomcat8/logs /var/log/tomcat8
 ln -s /var/log/tomcat8 /usr/share/tomcat8/logs
 
+#temp,work
 mkdir -p /var/cache/tomcat8/{temp,work}
 chown tomcat:tomcat -R /var/cache/tomcat8
-chmod 770 -R /var/cache/tomcat8
+chmod 0770 -R /var/cache/tomcat8
 ln -s /var/cache/tomcat8/temp /usr/share/tomcat8/temp
 ln -s /var/cache/tomcat8/work /usr/share/tomcat8/work
 
+#webapps
 mkdir -p /var/lib/tomcat8
 mv /usr/share/tomcat8/webapps /var/lib/tomcat8/webapps
-chown tomcat:tomcat /var/lib/tomcat8
-chmod 775 -R /var/lib/tomcat8
+chown tomcat:tomcat -R /var/lib/tomcat8
+chmod 0770 /var/lib/tomcat8
+chmod 0775 -R /var/lib/tomcat8/webapps
 ln -s /var/lib/tomcat8/webapps /usr/share/tomcat8/webapps
 
+#instances
 mkdir -p /var/lib/tomcat8s
 chown tomcat:tomcat /var/lib/tomcat8s
-chmod 775 /var/lib/tomcat8s
+chmod 0775 /var/lib/tomcat8s
 
 touch /var/run/tomcat8.pid
 chown tomcat:tomcat /var/run/tomcat8.pid
 chmod 664 /var/run/tomcat8.pid
 
-# ---
-exit 0
-# ---
-
-sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat8/webapps/{host-manager,manager}/META-INF/context.xml
 sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat8/conf/tomcat-users.xml
 cat <<_EOT_>> /usr/share/tomcat8/conf/tomcat-users.xml
   <role rolename="admin-gui" />
@@ -225,6 +222,8 @@ _EOT_
 chown tomcat:tomcat /etc/tomcat8/tomcat8.conf
 chmod 664 /etc/tomcat8/tomcat8.conf
 
+exit 0
+
 cat <<_EOT_> /usr/lib/systemd/system/tomcat8.service
 [Unit]
 Description=Apache Tomcat Web Application Container
@@ -276,18 +275,3 @@ WantedBy=multi-user.target
 
 _EOT_
 chmod 644 /usr/lib/systemd/system/tomcat8@.service
-
-yum install -y apr15u-devel gcc openssl-devel --enablerepo=ius,furplag.github.io
-
-exit 0
-
-tar xf /usr/share/tomcat9/bin/tomcat-native.tar.gz -C /usr/local/src
-cd /usr/local/src/tomcat-native-1.2.7-src/native/
-
-./configure \
---prefix=/usr \
---libdir=/usr/lib64 \
---with-java-home=/usr/java/latest \
---with-apr=/usr/bin/apr15u-1-config \
---with-ssl=/usr/include/openssl && \
-make && make install
