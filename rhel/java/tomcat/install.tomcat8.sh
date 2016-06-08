@@ -51,22 +51,20 @@ rm -rf /usr/share/tomcat8/{logs,temp,work}
 
 # bin
 rm -rf /usr/share/tomcat8/bin/*.bat
-chmod +x /usr/share/tomcat8/bin/jsvc
 chmod 0664 /usr/share/tomcat8/bin/*.*
+chmod +x /usr/share/tomcat8/bin/{jsvc,*.sh}
 
 #conf
-chown tomcat:tomcat /usr/share/tomcat8/conf/*.*
-chmod 0664 /usr/share/tomcat8/conf/*.*
-chmod 0660 /usr/share/tomcat8/conf/tomcat-users.xml
 mv /usr/share/tomcat8/conf /etc/tomcat8
 ln -s /etc/tomcat8 /usr/share/tomcat8/conf
-
-mkdir -p /var/log/tomcat8
-chown /var/log/tomcat8
-chmod 0770 /var/log/tomcat8
+chown tomcat:tomcat /etc/tomcat8/*.*
+chmod 0664 /etc/tomcat8/*.*
+chmod 0660 /etc/tomcat8/tomcat-users.xml
 
 #logs
-mv /usr/share/tomcat8/logs /var/log/tomcat8
+mkdir -p /var/log/tomcat8
+chown tomcat:tomcat /var/log/tomcat8
+chmod 0770 /var/log/tomcat8
 ln -s /var/log/tomcat8 /usr/share/tomcat8/logs
 
 #temp,work
