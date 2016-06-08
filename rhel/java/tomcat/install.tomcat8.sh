@@ -2,7 +2,7 @@
 
 systemctl status tomcat8 >/dev/null && exit 0
 
-grep -e "^tomcat" /etc/passwd || useradd -u 91 tomcat -U -r -s /sbin/nologin
+grep -e "^tomcat" /etc/passwd >/dev/null || useradd -u 91 tomcat -U -r -s /sbin/nologin
 
 currentDir=`pwd`
 
