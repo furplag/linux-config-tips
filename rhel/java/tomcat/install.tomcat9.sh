@@ -1,41 +1,100 @@
 #!/bin/bash
 
-grep -e "^tomcat" /etc/passwd || useradd -u 91 tomcat -U -s /sbin/nologin
+systemctl status tomcat9 >/dev/null && exit 0
+currentDir=`pwd`
 
-curl -fjkLO http://www-us.apache.org/dist/tomcat/tomcat-9/v9.0.0.M6/bin/apache-tomcat-9.0.0.M6.tar.gz
+if ! grep -e "^tomcat" /etc/passwd >/dev/null; then
+  echo "  create user: Tomcat (91)."
+  useradd -u 91 tomcat -U -r -s /sbin/nologin
+fi
 
-tar xf apache-tomcat-9.0.0.M6.tar.gz -C /usr/share
-mv /usr/share/apache-tomcat-9.0.0.M6 /usr/share/tomcat9
+if ! ls /usr/lib64 | grep tcnative >/dev/null; then
+  echo "  install tomcat native ..."
+  if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
+    yum install -y -q automake gcc >/dev/null || exit 1
+  fi
+  yum install -y -q apr15u-devel --enablerepo=ius || yum install -y -q apr-devel exit 1
+  yum install -y -q openssl-devel --enablerepo=furplag.github.io || yum install -y -q openssl-devel || exit 1
 
+  curl -L http://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz \
+  -o /tmp/tomcat-native-1.2.7-src.tar.gz
+
+  cd /tmp/tomcat-native-1.2.7-src/native
+  ./configure \
+  --prefix=/usr \
+  --libdir=/usr/lib64 \
+  --with-java-home=/usr/java/latest \
+  --with-apr=/usr/bin/apr15u-1-config \
+  --with-ssl=/usr/include/openssl && \
+  make && make install && \
+  cd "${currentDir}"  
+  rm -rf /tmp/tomcat-native-1.2.7-src
+fi
+
+echo "  Downloading Tomcat ..."
+curl -fjkL http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz \
+-o /tmp/apache-tomcat-8.0.35.tar.gz
+tar xf /tmp/apache-tomcat-8.0.35.tar.gz -C /usr/share
+mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat9
+
+echo "  install tomcat daemon ..."
+if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
+  yum install -y -q automake gcc >/dev/null || exit 1
+fi
+tar xf /usr/share/tomcat9/bin/commons-daemon-native.tar.gz -C /tmp
+cd /tmp/commons-daemon-1.0.15-native-src/unix
+./configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--with-java=/usr/java/latest >/dev/null && \
+make >/dev/null && \
+cd "${currentDir}"
+cp /tmp/commons-daemon-1.0.15-native-src/unix/jsvc /usr/share/tomcat9/bin/jsvc
+rm -rf /tmp/commons-daemon-1.0.15-native-src/unix/jsvc 
+
+echo "  building structure ..."
 mkdir -p /usr/share/tomcat9/conf/Catalina/localhost
-chown tomcat:tomcat -R /usr/share/tomcat9
+chown root:tomcat -R /usr/share/tomcat9
 chmod 775 -R /usr/share/tomcat9
-rm -rf /usr/share/tomcat9/bin/*.bat
-rm -rf /usr/share/tomcat9/{temp,work}
-chown tomcat:root -R /usr/share/tomcat9/conf
-chmod 664 -R /usr/share/tomcat9/conf
-chmod 660 /usr/share/tomcat9/conf/tomcat-users.xml
+rm -rf /usr/share/tomcat9/{logs,temp,work}
 
+# bin
+rm -rf /usr/share/tomcat9/bin/*.bat
+chmod 0664 /usr/share/tomcat9/bin/*.*
+chmod +x /usr/share/tomcat9/bin/{jsvc,*.sh}
+
+#conf
 mv /usr/share/tomcat9/conf /etc/tomcat9
 ln -s /etc/tomcat9 /usr/share/tomcat9/conf
-mv /usr/share/tomcat9/logs /var/log/tomcat9
+chown tomcat:tomcat /etc/tomcat9/*.*
+chmod 0664 /etc/tomcat9/*.*
+chmod 0660 /etc/tomcat9/tomcat-users.xml
+
+#logs
+mkdir -p /var/log/tomcat9
+chown tomcat:tomcat /var/log/tomcat9
+chmod 0770 /var/log/tomcat9
 ln -s /var/log/tomcat9 /usr/share/tomcat9/logs
 
+#temp,work
 mkdir -p /var/cache/tomcat9/{temp,work}
 chown tomcat:tomcat -R /var/cache/tomcat9
-chmod 770 -R /var/cache/tomcat9
+chmod 0770 -R /var/cache/tomcat9
 ln -s /var/cache/tomcat9/temp /usr/share/tomcat9/temp
 ln -s /var/cache/tomcat9/work /usr/share/tomcat9/work
 
+#webapps
 mkdir -p /var/lib/tomcat9
 mv /usr/share/tomcat9/webapps /var/lib/tomcat9/webapps
-chown tomcat:tomcat /var/lib/tomcat9
-chmod 775 -R /var/lib/tomcat9
+chown tomcat:tomcat -R /var/lib/tomcat9
+chmod 0770 /var/lib/tomcat9
+chmod 0775 -R /var/lib/tomcat9/webapps
 ln -s /var/lib/tomcat9/webapps /usr/share/tomcat9/webapps
 
-mkdir -p /var/lib/tomcats
-chown tomcat:tomcat /var/lib/tomcats
-chmod 775 /var/lib/tomcats
+#instances
+mkdir -p /var/lib/tomcat9s
+chown tomcat:tomcat /var/lib/tomcat9s
+chmod 0775 /var/lib/tomcat9s
 
 touch /var/run/tomcat9.pid
 chown tomcat:tomcat /var/run/tomcat9.pid
@@ -54,7 +113,6 @@ cat <<_EOT_>> /usr/share/tomcat9/conf/tomcat-users.xml
 </tomcat-users>
 
 _EOT_
-
 
 cat <<_EOT_> /etc/sysconfig/tomcat9
 # Service-specific configuration file for tomcat. This will be sourced by
@@ -128,15 +186,15 @@ cat <<_EOT_> /etc/tomcat9/tomcat9.conf
 #
 # Use this file to change default values for all services.
 # Change the service specific ones to affect only one service.
-# For tomcat.service it's /etc/sysconfig/tomcat9, for
-# tomcat@instance it's /etc/sysconfig/tomcat9@instance.
+# For tomcat9.service it's /etc/sysconfig/tomcat9, for
+# tomcat9@instance it's /etc/sysconfig/tomcat9@instance.
 
 # This variable is used to figure out if config is loaded or not.
 TOMCAT_CFG_LOADED="1"
 
 # In new-style instances, if CATALINA_BASE isn't specified, it will
 # be constructed by joining TOMCATS_BASE and NAME.
-TOMCATS_BASE="/var/lib/tomcats/"
+TOMCATS_BASE="/var/lib/tomcat9s/"
 
 # Where your java installation lives
 JAVA_HOME="${JAVA_HOME}"
@@ -166,12 +224,21 @@ SECURITY_MANAGER="false"
 # If you wish to further customize your tomcat environment,
 # put your own definitions here
 # (i.e. LD_LIBRARY_PATH for some jdbc drivers)
+CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8"
+CATALINA_OPTS="-Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m"
+CATALINA_OPTS="-Xloggc:/usr/share/tomcat9/logs/gc.log -XX:+PrintGCDetails"
+CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
 chown tomcat:tomcat /etc/tomcat9/tomcat9.conf
 chmod 664 /etc/tomcat9/tomcat9.conf
 
 cat <<_EOT_> /usr/lib/systemd/system/tomcat9.service
+# Systemd unit file for default tomcat
+# 
+# To create clones of this service:
+# DO NOTHING, use tomcat9@.service instead.
+
 [Unit]
 Description=Apache Tomcat Web Application Container
 After=syslog.target network.target
@@ -181,8 +248,13 @@ Type=forking
 EnvironmentFile=/etc/tomcat9/tomcat9.conf
 Environment="NAME="
 EnvironmentFile=-/etc/sysconfig/tomcat9
+
+# replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
+# ExecStart=/usr/share/tomcat9/bin/daemon.sh start
+# ExecStop=/usr/share/tomcat9/bin/daemon.sh stop
 ExecStart=/usr/share/tomcat9/bin/startup.sh
 ExecStop=/usr/share/tomcat9/bin/shutdown.sh
+
 SuccessExitStatus=143
 User=tomcat
 Group=tomcat
@@ -197,9 +269,9 @@ cat <<_EOT_> /usr/lib/systemd/system/tomcat9@.service
 # Systemd unit file for tomcat instances.
 # 
 # To create clones of this service:
-# 0. systemctl enable tomcat@name.service
+# 0. systemctl enable tomcat9@name.service
 # 1. create catalina.base directory structure in
-#    /var/lib/tomcats/name
+#    /var/lib/tomcat9s/name
 # 2. profit.
 
 [Unit]
@@ -211,8 +283,13 @@ Type=forking
 EnvironmentFile=/etc/tomcat9/tomcat9.conf
 Environment="NAME=%I"
 EnvironmentFile=-/etc/sysconfig/tomcat9@%I
+
+# replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
+# ExecStart=/usr/share/tomcat9/bin/daemon.sh start
+# ExecStop=/usr/share/tomcat9/bin/daemon.sh stop
 ExecStart=/usr/share/tomcat9/bin/startup.sh
 ExecStop=/usr/share/tomcat9/bin/shutdown.sh
+
 SuccessExitStatus=143
 User=tomcat
 Group=tomcat
@@ -223,15 +300,5 @@ WantedBy=multi-user.target
 _EOT_
 chmod 644 /usr/lib/systemd/system/tomcat9@.service
 
-yum install -y apr15u-devel gcc openssl-devel --enablerepo=ius,furplag.github.io
-
-tar xf /usr/share/tomcat9/bin/tomcat-native.tar.gz -C /usr/local/src
-cd /usr/local/src/tomcat-native-1.2.7-src/native/
-
-./configure \
---prefix=/usr \
---libdir=/usr/lib64 \
---with-java-home=/usr/java/latest \
---with-apr=/usr/bin/apr15u-1-config \
---with-ssl=/usr/include/openssl && \
-make && make install
+echo "Done."
+exit 0
