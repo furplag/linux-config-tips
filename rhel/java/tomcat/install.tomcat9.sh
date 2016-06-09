@@ -25,8 +25,8 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   --libdir=/usr/lib64 \
   --with-java-home=/usr/java/latest \
   --with-apr=/usr/bin/apr15u-1-config \
-  --with-ssl=/usr/include/openssl && \
-  make && make install && \
+  --with-ssl=/usr/include/openssl >/dev/null && \
+  make >/dev/null && make install >/dev/null && \
   cd "${currentDir}"  
   rm -rf /tmp/tomcat-native-1.2.7-src
 fi
@@ -50,7 +50,7 @@ cd /tmp/commons-daemon-1.0.15-native-src/unix
 make >/dev/null && \
 cd "${currentDir}"
 cp /tmp/commons-daemon-1.0.15-native-src/unix/jsvc /usr/share/tomcat9/bin/jsvc
-rm -rf /tmp/commons-daemon-1.0.15-native-src/unix/jsvc 
+rm -rf /tmp/commons-daemon-1.0.15-native-src
 
 echo "  building structure ..."
 mkdir -p /usr/share/tomcat9/conf/Catalina/localhost
