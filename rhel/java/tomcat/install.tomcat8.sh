@@ -8,14 +8,13 @@ if ! grep -e "^tomcat" /etc/passwd >/dev/null; then
   useradd -u 91 tomcat -U -r -s /sbin/nologin
 fi
 
-if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
-  echo "  install packages: automake, gcc"
-  yum install -y -q automake gcc >/dev/null
-fi
 if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   echo "  install tomcat native ..."
-  yum install -y -q apr15u-devel --enablerepo=ius
-  yum install -y -q openssl-devel --enablerepo=furplag.github.io
+  if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
+    yum install -y -q automake gcc >/dev/null || exit 1
+  fi
+  yum install -y -q apr15u-devel --enablerepo=ius || yum install -y -q apr-devel exit 1
+  yum install -y -q openssl-devel --enablerepo=furplag.github.io || yum install -y -q openssl-devel || exit 1
 
   curl -L http://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz \
   -o /tmp/tomcat-native-1.2.7-src.tar.gz
@@ -39,6 +38,9 @@ tar xf /tmp/apache-tomcat-8.0.35.tar.gz -C /usr/share
 mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat8
 
 echo "  install tomcat daemon ..."
+if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
+  yum install -y -q automake gcc >/dev/null || exit 1
+fi
 tar xf /usr/share/tomcat8/bin/commons-daemon-native.tar.gz -C /tmp
 cd /tmp/commons-daemon-1.0.15-native-src/unix
 ./configure \
@@ -98,6 +100,7 @@ touch /var/run/tomcat8.pid
 chown tomcat:tomcat /var/run/tomcat8.pid
 chmod 664 /var/run/tomcat8.pid
 
+sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat8/webapps/{host-manager,manager}/META-INF/context.xml
 sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat8/conf/tomcat-users.xml
 cat <<_EOT_>> /usr/share/tomcat8/conf/tomcat-users.xml
   <role rolename="admin-gui" />
@@ -159,7 +162,7 @@ cat <<_EOT_> /etc/sysconfig/tomcat8
 #SHUTDOWN_VERBOSE="false"
 
 # Set the TOMCAT_PID location
-#CATALINA_PID="/var/run/tomcat9.pid"
+#CATALINA_PID="/var/run/tomcat8.pid"
 
 # Connector port is 8080 for this tomcat instance
 #CONNECTOR_PORT="8080"
