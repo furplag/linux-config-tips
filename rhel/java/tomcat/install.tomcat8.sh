@@ -14,10 +14,10 @@ if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
 fi
 if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   echo "  install tomcat native ..."
-  yum install -y apr15u-devel --enablerepo=ius
-  yum install -y openssl-devel --enablerepo=furplag.github.io
+  yum install -y -q apr15u-devel --enablerepo=ius
+  yum install -y -q openssl-devel --enablerepo=furplag.github.io
 
-  curl -L http://ftp.yz.yamagata-u.ac.jp/pub/network/apache/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz \
+  curl -L http://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz \
   -o /tmp/tomcat-native-1.2.7-src.tar.gz
 
   cd /tmp/tomcat-native-1.2.7-src/native
@@ -32,13 +32,13 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   rm -rf /tmp/tomcat-native-1.2.7-src
 fi
 
-echo "  install tomcat daemon ..."
-curl -fjkL http://ftp.meisei-u.ac.jp/mirror/apache/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz \
+echo "  Downloading Tomcat ..."
+curl -fjkL http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz \
 -o /tmp/apache-tomcat-8.0.35.tar.gz
 tar xf /tmp/apache-tomcat-8.0.35.tar.gz -C /usr/share
 mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat8
 
-echo "  Downloading Tomcat ..."
+echo "  install tomcat daemon ..."
 tar xf /usr/share/tomcat8/bin/commons-daemon-native.tar.gz -C /tmp
 cd /tmp/commons-daemon-1.0.15-native-src/unix
 ./configure \
