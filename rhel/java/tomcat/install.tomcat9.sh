@@ -32,10 +32,10 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
 fi
 
 echo "  Downloading Tomcat ..."
-curl -fjkL http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz \
--o /tmp/apache-tomcat-8.0.35.tar.gz
-tar xf /tmp/apache-tomcat-8.0.35.tar.gz -C /usr/share
-mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat9
+curl -fjkL http://archive.apache.org/dist/tomcat/tomcat-9/v9.0.0.M6/bin/apache-tomcat-9.0.0.M6.tar.gz \
+-o /tmp/apache-tomcat-9.0.0.M6.tar.gz
+tar xf /tmp/apache-tomcat-9.0.0.M6.tar.gz -C /usr/share
+mv /usr/share/apache-tomcat-9.0.0.M6.tar.gz /usr/share/tomcat9
 
 echo "  install tomcat daemon ..."
 if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
