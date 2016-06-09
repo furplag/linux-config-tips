@@ -111,7 +111,6 @@ cat <<_EOT_>> /usr/share/tomcat8/conf/tomcat-users.xml
 
 _EOT_
 
-
 cat <<_EOT_> /etc/sysconfig/tomcat8
 # Service-specific configuration file for tomcat. This will be sourced by
 # the SysV init script after the global configuration file
@@ -230,8 +229,6 @@ CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 _EOT_
 chown tomcat:tomcat /etc/tomcat8/tomcat8.conf
 chmod 664 /etc/tomcat8/tomcat8.conf
-
-exit 0
 
 cat <<_EOT_> /usr/lib/systemd/system/tomcat8.service
 # Systemd unit file for default tomcat
