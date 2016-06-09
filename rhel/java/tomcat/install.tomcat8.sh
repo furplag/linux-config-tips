@@ -192,7 +192,7 @@ TOMCAT_CFG_LOADED="1"
 
 # In new-style instances, if CATALINA_BASE isn't specified, it will
 # be constructed by joining TOMCATS_BASE and NAME.
-TOMCATS_BASE="/var/lib/tomcats/"
+TOMCATS_BASE="/var/lib/tomcat8s/"
 
 # Where your java installation lives
 JAVA_HOME="${JAVA_HOME}"
@@ -222,6 +222,10 @@ SECURITY_MANAGER="false"
 # If you wish to further customize your tomcat environment,
 # put your own definitions here
 # (i.e. LD_LIBRARY_PATH for some jdbc drivers)
+CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8"
+CATALINA_OPTS="-Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m"
+CATALINA_OPTS="-Xloggc:/usr/share/tomcat8/logs/gc.log -XX:+PrintGCDetails"
+CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
 chown tomcat:tomcat /etc/tomcat8/tomcat8.conf
@@ -230,6 +234,11 @@ chmod 664 /etc/tomcat8/tomcat8.conf
 exit 0
 
 cat <<_EOT_> /usr/lib/systemd/system/tomcat8.service
+# Systemd unit file for default tomcat
+# 
+# To create clones of this service:
+# DO NOTHING, use tomcat8@.service instead.
+
 [Unit]
 Description=Apache Tomcat Web Application Container
 After=syslog.target network.target
@@ -239,8 +248,13 @@ Type=forking
 EnvironmentFile=/etc/tomcat8/tomcat8.conf
 Environment="NAME="
 EnvironmentFile=-/etc/sysconfig/tomcat8
+
+# replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
+# ExecStart=/usr/share/tomcat8/bin/daemon.sh start
+# ExecStop=/usr/share/tomcat8/bin/daemon.sh stop
 ExecStart=/usr/share/tomcat8/bin/startup.sh
 ExecStop=/usr/share/tomcat8/bin/shutdown.sh
+
 SuccessExitStatus=143
 User=tomcat
 Group=tomcat
@@ -269,8 +283,13 @@ Type=forking
 EnvironmentFile=/etc/tomcat8/tomcat8.conf
 Environment="NAME=%I"
 EnvironmentFile=-/etc/sysconfig/tomcat8@%I
+
+# replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
+# ExecStart=/usr/share/tomcat8/bin/daemon.sh start
+# ExecStop=/usr/share/tomcat8/bin/daemon.sh stop
 ExecStart=/usr/share/tomcat8/bin/startup.sh
 ExecStop=/usr/share/tomcat8/bin/shutdown.sh
+
 SuccessExitStatus=143
 User=tomcat
 Group=tomcat
