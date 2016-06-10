@@ -1,4 +1,21 @@
 #!/bin/bash
+set -ue -o pipefail
+export LC_ALL=C
+###
+# tomcat.install.sh
+# https://github.com/furplag/linux-config-tips
+# Copyright 2016 furplag
+# Licensed under MIT (https://github.com/furplag/linux-config-tips/blob/master/LICENSE)
+# 
+# Automatically setting up to use Tomcat.
+#   1. Install Tomcat.
+#   2. Install Tomcat Native.
+#   3. Enable Tomcat run as daemon.
+#   4. Set tomcat8.service ( also enable @instance ) .
+#   5. Enable Tomcat Manager.
+# Requirements
+#   1. JDK 
+#   2. dependency packages to build Tomcat native: apr-devel, automake, gcc, openssl-devel
 
 systemctl status tomcat8 >/dev/null && exit 0
 currentDir=`pwd`
@@ -95,12 +112,14 @@ ln -s /var/lib/tomcat8/webapps /usr/share/tomcat8/webapps
 mkdir -p /var/lib/tomcat8s
 chown tomcat:tomcat /var/lib/tomcat8s
 chmod 0775 /var/lib/tomcat8s
+ln -s /var/lib/tomcat8s /usr/share/tomcat8/instances
 
-touch /var/run/tomcat8.pid
-chown tomcat:tomcat /var/run/tomcat8.pid
-chmod 664 /var/run/tomcat8.pid
+#pid(s)
+mkdir -p /var/run/tomcat
+chown tomcat:tomcat /var/run/tomcat
+chmod 0775 /var/run/tomcat
+ln -s /var/run/tomcat /usr/share/tomcat8/run
 
-sed -i -e 's/Context antiResourceLocking="false"/Context antiResourceLocking="true"/' -e 's/<Context[^>]*>$/\0\n<!-- /' -e 's/<\/Context/ -->\n\0/' /usr/share/tomcat8/webapps/{host-manager,manager}/META-INF/context.xml
 sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat8/conf/tomcat-users.xml
 cat <<_EOT_>> /usr/share/tomcat8/conf/tomcat-users.xml
   <role rolename="admin-gui" />
@@ -203,11 +222,9 @@ JAVA_HOME="${JAVA_HOME}"
 CATALINA_HOME="/usr/share/tomcat8"
 
 # System-wide tmp
-CATALINA_TMPDIR="/var/cache/tomcat8/temp"
+CATALINA_TMPDIR="/usr/share/tomcat8/temp"
 
 # You can pass some parameters to java here if you wish to
-#JAVA_OPTS="-Xminf0.1 -Xmaxf0.3"
-
 # Use JAVA_OPTS to set java.library.path for libtcnative.so
 #JAVA_OPTS="-Djava.library.path=/usr/lib"
 
@@ -220,6 +237,15 @@ SECURITY_MANAGER="false"
 # Time to wait in seconds, before killing process
 # TODO(stingray): does nothing, fix.
 # SHUTDOWN_WAIT="30"
+
+# Whether to annoy the user with "attempting to shut down" messages or not
+SHUTDOWN_VERBOSE="false"
+
+# Set the TOMCAT_PID location
+CATALINA_PID="/usr/share/tomcat8/run/tomcat8.pid"
+
+# Connector port is 8080 for this tomcat instance
+CONNECTOR_PORT="8080"
 
 # If you wish to further customize your tomcat environment,
 # put your own definitions here
