@@ -24,6 +24,7 @@ mv /etc/localtime /etc/localtime.origin && ln -s /usr/share/zoneinfo/Asia/Tokyo 
 sed -i -e 's/^./#\0/' -e '1i\ZONE="Asia\/Tokyo"\nUTC=TRUE' /etc/sysconfig/clock
 
 sed -i -e "$(echo $(cat /etc/ntp.conf | grep -n -e "^server" | sed -n '$p' | sed -e 's/:.*//'))a\server -4 ntp.nict.jp iburst\nserver 127.127.1.0\nfudge 127.127.1.0 stratum 10\n" \
+echo "ntp.nict.jp" /etc/ntp/step-tickers
 /etc/ntp.conf
 service ntpd restart
 
