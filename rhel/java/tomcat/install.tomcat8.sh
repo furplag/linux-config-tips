@@ -14,8 +14,8 @@ export LC_ALL=C
 #   4. Set tomcat8.service ( also enable @instance ) .
 #   5. Enable Tomcat Manager.
 # Requirements
-#   1. JDK 
-#   2. dependency packages to build Tomcat native: apr-devel, automake, gcc, openssl-devel
+#   1. environment named "JAVA_HOME".
+#   2. dependency packages to build Tomcat native: apr-devel, automake, gcc, openssl-devel.
 
 ## variables
 declare -r name=`basename $0`
@@ -31,14 +31,17 @@ declare -r tomcat_native_src=$(echo $url_tomcat_native_src | sed -e 's/^.*\///g'
 declare -r owner=tomcat
 declare -r gid=53
 declare -r uid=53
-declare -r verStr=$(echo $tomcat_src sed -e 's/^[^0-9\.]//' | sed -e 's/\.[^0-9]$//g')
+declare -r verStr=$(echo $tomcat_src | sed -e 's/^[^0-9\.]*//' -e 's/\.[^0-9]*$//g')
 declare -r ver=$(echo $verStr | sed -e 's/\..*$//g')
 declare -r path=/usr/share/$owner$ver
 
 declare url=
 declare source=
 
-systemctl status tomcat8 >/dev/null && exit 0
+declare -r JAVA_HOME=${JAVA_HOME:-$(echo $(readlink -e $(which java 2>/dev/null)) | sed -e 's/\/bin\/java$//')}
+
+[ -z $JAVA_HOME ] && echo "  Lost Java, install JDK first." && exit 1
+systemctl status tomcat$ver >/dev/null && echo "  tomcat$ver already exist." exit 0
 
 if ! grep -e "^${owner}" /etc/group >/dev/null; then
   echo "  create group: ${owner} (${gid})."
@@ -66,7 +69,7 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   -o $workDir/$source
 
   tar xf $workDir/$source -C $workDir && \
-  cd $workDir/$(echo $source | sed -e 's/\.[^0-9]$//g')/native
+  cd $workDir/$(echo $source | sed -e 's/\.[^0-9]*$//g')/native
   ./configure \
   --prefix=/usr \
   --libdir=/usr/lib64 \
@@ -77,15 +80,15 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   cd "${currentDir}"
 fi
 
+[ -d $path ] || mkdir -p $path || exit 1
+
 url=$url_tomcat_src
 source=$tomcat_src
 echo "  Downloading Tomcat ..."
 curl -fjkL $url \
 -o $workDir/$source
 tar xf $workDir/$source -C $workDir
-mv $workDir/$source/* $path/.
-
-exit 0
+mv $workDir/$(echo $source | sed -e 's/\.[^0-9]*$//g')/* $path/.
 
 echo "  install tomcat daemon ..."
 if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
