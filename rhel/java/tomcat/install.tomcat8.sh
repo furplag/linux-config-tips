@@ -20,9 +20,23 @@ export LC_ALL=C
 systemctl status tomcat8 >/dev/null && exit 0
 currentDir=`pwd`
 
+## variables
+declare -r owner=tomcat
+declare -r gid=53
+declare -r uid=53
+declare -r verStr=$(echo $url | sed -e 's/^.*\///g' | sed -e 's/^[^0-9\.]//' | sed -e 's/\.[^0-9]$//g')
+declare -r ver=$(echo $verStr | sed -e 's/\..*$//g')
+declare -r path=/usr/share/$owner$ver
+declare -r url=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
+declare -r source=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
+
+if ! grep -e "^tomcat" /etc/group >/dev/null; then
+  groupadd -g 53 tomcat
+fi
+
 if ! grep -e "^tomcat" /etc/passwd >/dev/null; then
-  echo "  create user: Tomcat (91)."
-  useradd -u 91 tomcat -U -r -s /sbin/nologin
+  echo "  create user: Tomcat (53)."
+  useradd -u 53 tomcat -U -d /usr/share/tomcat -s /sbin/nologin
 fi
 
 if ! ls /usr/lib64 | grep tcnative >/dev/null; then
