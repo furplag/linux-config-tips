@@ -17,27 +17,40 @@ export LC_ALL=C
 #   1. JDK 
 #   2. dependency packages to build Tomcat native: apr-devel, automake, gcc, openssl-devel
 
-systemctl status tomcat8 >/dev/null && exit 0
-currentDir=`pwd`
-
 ## variables
+declare -r name=`basename $0`
+declare -r datetime=`date +"%Y%m%d%H%M%S"`
+declare -r currentDir=`pwd`
+declare -r workDir=/tmp/$name.$datetime
+
+declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
+declare -r tomcat_src=$(echo $url_tomcat_src | sed -e 's/^.*\///g')
+declare -r url_tomcat_native_src=http://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz
+declare -r tomcat_native_src=$(echo $url_tomcat_native_src | sed -e 's/^.*\///g')
+
 declare -r owner=tomcat
 declare -r gid=53
 declare -r uid=53
-declare -r verStr=$(echo $url | sed -e 's/^.*\///g' | sed -e 's/^[^0-9\.]//' | sed -e 's/\.[^0-9]$//g')
+declare -r verStr=$(echo $tomcat_src sed -e 's/^[^0-9\.]//' | sed -e 's/\.[^0-9]$//g')
 declare -r ver=$(echo $verStr | sed -e 's/\..*$//g')
 declare -r path=/usr/share/$owner$ver
-declare -r url=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
-declare -r source=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
 
-if ! grep -e "^tomcat" /etc/group >/dev/null; then
-  groupadd -g 53 tomcat
+declare url=
+declare source=
+
+systemctl status tomcat8 >/dev/null && exit 0
+
+if ! grep -e "^${owner}" /etc/group >/dev/null; then
+  echo "  create group: ${owner} (${gid})."
+  groupadd -g $gid $owner
 fi
 
-if ! grep -e "^tomcat" /etc/passwd >/dev/null; then
-  echo "  create user: Tomcat (53)."
-  useradd -u 53 tomcat -U -d /usr/share/tomcat -s /sbin/nologin
+if ! grep -e "^${owner}" /etc/passwd >/dev/null; then
+  echo "  create user: ${owner} (${uid})."
+  useradd -u $uid $owner -U -d $path -s /sbin/nologin
 fi
+
+[ -d $workDir ] || mkdir -p $workDir || exit 1
 
 if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   echo "  install tomcat native ..."
@@ -47,10 +60,13 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   yum install -y -q apr15u-devel --enablerepo=ius || yum install -y -q apr-devel exit 1
   yum install -y -q openssl-devel --enablerepo=furplag.github.io || yum install -y -q openssl-devel || exit 1
 
-  curl -L http://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz \
-  -o /tmp/tomcat-native-1.2.7-src.tar.gz
+  url=$url_tomcat_native_src
+  source=$tomcat_native_src
+  curl -L $url \
+  -o $workDir/$source
 
-  cd /tmp/tomcat-native-1.2.7-src/native
+  tar xf $workDir/$source -C $workDir && \
+  cd $workDir/$(echo $source | sed -e 's/\.[^0-9]$//g')/native
   ./configure \
   --prefix=/usr \
   --libdir=/usr/lib64 \
@@ -58,15 +74,18 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   --with-apr=/usr/bin/apr15u-1-config \
   --with-ssl=/usr/include/openssl >/dev/null && \
   make >/dev/null && make install >/dev/null && \
-  cd "${currentDir}"  
-  rm -rf /tmp/tomcat-native-1.2.7-src
+  cd "${currentDir}"
 fi
 
+url=$url_tomcat_src
+source=$tomcat_src
 echo "  Downloading Tomcat ..."
-curl -fjkL http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz \
--o /tmp/apache-tomcat-8.0.35.tar.gz
-tar xf /tmp/apache-tomcat-8.0.35.tar.gz -C /usr/share
-mv /usr/share/apache-tomcat-8.0.35 /usr/share/tomcat8
+curl -fjkL $url \
+-o $workDir/$source
+tar xf $workDir/$source -C $workDir
+mv $workDir/$source/* $path/.
+
+exit 0
 
 echo "  install tomcat daemon ..."
 if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
