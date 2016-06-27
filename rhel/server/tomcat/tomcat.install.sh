@@ -24,6 +24,7 @@ declare -r currentDir=`pwd`
 declare -r workDir=/tmp/$name.$datetime
 
 declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
+#declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-9/v9.0.0.M8/bin/apache-tomcat-9.0.0.M8.tar.gz
 declare -r tomcat_src=$(echo $url_tomcat_src | sed -e 's/^.*\///g')
 
 declare -r owner=tomcat
@@ -40,6 +41,8 @@ declare source=
 declare extracted=
 
 declare -r JAVA_HOME=${JAVA_HOME:-$(echo $(readlink -e $(which java 2>/dev/null)) | sed -e 's/\/bin\/java$//')}
+
+[ -d $tomcat_home ] && echo "  Tomcat ${ver} already exits." && exit 0
 
 [ -z $JAVA_HOME ] && echo "  Lost Java, install JDK first." && exit 1
 systemctl status tomcat$ver >/dev/null && echo "  tomcat$ver already exist." exit 0
@@ -350,7 +353,7 @@ if [ -e $sslCert ] && [ -e $sslKey ]; then
   scheme="https" secure="true" SSLEnabled="true"
   SSLCertificateFile="${sslCert}"
   SSLCertificateKeyFile="${sslKey}"
-  SSLVerifyClient="optional" SSLProtocol="TLSv1+TLSv1.1+TLSv1.2"/>
+  SSLProtocol="TLSv1+TLSv1.1+TLSv1.2"/>
 
 </Service>
 </Server>
