@@ -212,7 +212,7 @@ _EOT_
 curl -fjkL https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/webserver/tomcat/sysconfig.tomcat$ver.conf \
 -o /etc/sysconfig/tomcat$ver
 chown root:$owner /etc/sysconfig/tomcat$ver
-chown 0644 /etc/sysconfig/tomcat$ver
+chmod 0644 /etc/sysconfig/tomcat$ver
 
 cat <<_EOT_>> $tomcat_home/conf/tomcat$ver.conf
 # System-wide configuration file for tomcat services
