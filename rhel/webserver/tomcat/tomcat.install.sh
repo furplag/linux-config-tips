@@ -42,7 +42,10 @@ declare extracted=
 
 declare -r JAVA_HOME=${JAVA_HOME:-$(echo $(readlink -e $(which java 2>/dev/null)) | sed -e 's/\/bin\/java$//')}
 
-[ -d $tomcat_home ] && echo "  Tomcat ${ver} already exits." && exit 0
+`systemctl status tomcat$ver >/dev/null` && echo "  Tomcat ${ver} already exits." && exit 0
+
+[ -d $tomcat_home ] && echo "  Tomcat ${ver} already exits."
+[ -d $tomcat_home ] && mv $tomcat_home $tomcat_home.saved.$datetime
 
 [ -z $JAVA_HOME ] && echo "  Lost Java, install JDK first." && exit 1
 systemctl status tomcat$ver >/dev/null && echo "  tomcat$ver already exist." exit 0
@@ -64,8 +67,6 @@ source=$tomcat_src
 
 echo "  Downloading Tomcat ..."
 curl -fjkL $url -o $workDir/$source
-
-[ -e $tomcat_home ] && mv $tomcat_home $tomcat_home.saved.$datetime
 
 extracted=$(tar tf $workDir/$source | sed -n -e 1p | sed -e 's/\/.*//')
 tar xf $workDir/$source -C $workDir
@@ -100,7 +101,7 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
 
   source=$(ls $tomcat_home/bin | grep tomcat-native.*.tar.gz)
   extracted=$(tar tf $tomcat_home/bin/$source | sed -n -e 1p | sed -e 's/\/.*//')
-  tar xf $workDir/$source -C $workDir
+  tar xf $tomcat_home/bin/$source -C $workDir
   if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
   cd $workDir/$extracted/native
   ./configure \
