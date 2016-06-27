@@ -24,5 +24,5 @@
 
 ## HTTP/2.0
 
-* [NGINX](nginx.md)
-* Apache 2.4
+* [NGINX](webserver/nginx.md)
+* [Apache 2.4](webserver/apache/README.md)
