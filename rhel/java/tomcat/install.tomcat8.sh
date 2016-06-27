@@ -25,18 +25,19 @@ declare -r workDir=/tmp/$name.$datetime
 
 declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
 declare -r tomcat_src=$(echo $url_tomcat_src | sed -e 's/^.*\///g')
-declare -r url_tomcat_native_src=http://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.7/source/tomcat-native-1.2.7-src.tar.gz
-declare -r tomcat_native_src=$(echo $url_tomcat_native_src | sed -e 's/^.*\///g')
 
 declare -r owner=tomcat
 declare -r gid=53
 declare -r uid=53
 declare -r verStr=$(echo $tomcat_src | sed -e 's/^[^0-9\.]*//' -e 's/\.[^0-9]*$//g')
 declare -r ver=$(echo $verStr | sed -e 's/\..*$//g')
-declare -r path=/usr/share/$owner$ver
+declare -r tomcat_home=/usr/share/tomcat$ver
+declare -r tomcat_manager=tomcat
+declare -r tomcat_manager_pw=tomcat
 
 declare url=
 declare source=
+declare extracted=
 
 declare -r JAVA_HOME=${JAVA_HOME:-$(echo $(readlink -e $(which java 2>/dev/null)) | sed -e 's/\/bin\/java$//')}
 
@@ -50,222 +51,198 @@ fi
 
 if ! grep -e "^${owner}" /etc/passwd >/dev/null; then
   echo "  create user: ${owner} (${uid})."
-  useradd -u $uid $owner -U -d $path -s /sbin/nologin
+  useradd -u $uid $owner -U -d $tomcat_home -s /sbin/nologin
 fi
 
 [ -d $workDir ] || mkdir -p $workDir || exit 1
 
+url=$url_tomcat_src
+source=$tomcat_src
+
+echo "  Downloading Tomcat ..."
+curl -fjkL $url -o $workDir/$source
+
+[ -e $tomcat_home ] && mv $tomcat_home $tomcat_home.saved.$datetime
+
+extracted=$(tar tf $workDir/$source | sed -n -e 1p | sed -e 's/\/.*//')
+tar xf $workDir/$source -C $workDir
+if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
+mv $workDir/$extracted $tomcat_home
+if [ ! -d $tomcat_home ]; then echo "  set tomcat${ver} to ${path} failed."; exit 1; fi
+
 if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   echo "  install tomcat native ..."
-  if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
-    yum install -y -q automake gcc >/dev/null || exit 1
+  echo "  check build dependencies ..."
+  [ -n $(rpm -qa automake) ] || yum install -y -q automake 1>/dev/null
+  if [ -z $(rpm -qa automake) ]; then echo -e "  install package \"automake\" first."; exit 1; fi
+  [ -n $(rpm -qa gcc) ] || yum install -y -q gcc 1>/dev/null
+  if [ -z $(rpm -qa automake) ]; then echo -e "  install package \"gcc\" first."; exit 1; fi
+  if [ -z $(rpm -qa | grep -e "apr.*-devel") ]; then
+    [ -z $(yum repolist --disableplugin=* --disablerepo=* --enablerepo=ius | grep -e "^ius") ] || \
+    if yum install -y -q apr15u-devel --enablerepo=ius 1>/dev/null; then
+      withAPR=/usr/bin/apr15u-1-config
+    elif yum install -y -q apr-devel >/dev/null; then
+      withAPR=/usr/bin/apr-1-config
+    else
+      echo -e "  install package \"apr-devel\" first."
+      exit 1
+    fi
   fi
-  yum install -y -q apr15u-devel --enablerepo=ius || yum install -y -q apr-devel exit 1
-  yum install -y -q openssl-devel --enablerepo=furplag.github.io || yum install -y -q openssl-devel || exit 1
 
-  url=$url_tomcat_native_src
-  source=$tomcat_native_src
-  curl -L $url \
-  -o $workDir/$source
+  if [ -z $(rpm -qa openssl-devel) ]; then
+    [ -z $(yum repolist --disableplugin=* --disablerepo=* --enablerepo=furplag.github.io | grep -e "^furplag") ] || \
+    yum install -y -q openssl-devel --enablerepo=furplag.github.io 1>/dev/null || yum install -y -q openssl-devel
+    if [ -z $(rpm -qa openssl-devel) ]; then echo "  install package \"openssl-devel\" first."; exit 1; fi
+  fi
 
-  tar xf $workDir/$source -C $workDir && \
-  cd $workDir/$(echo $source | sed -e 's/\.[^0-9]*$//g')/native
+  source=$(ls $tomcat_home/bin | grep tomcat-native.*.tar.gz)
+  extracted=$(tar tf $tomcat_home/bin/$source | sed -n -e 1p | sed -e 's/\/.*//')
+  tar xf $workDir/$source -C $workDir
+  if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
+  cd $workDir/$extracted/native
   ./configure \
   --prefix=/usr \
   --libdir=/usr/lib64 \
-  --with-java-home=/usr/java/latest \
-  --with-apr=/usr/bin/apr15u-1-config \
-  --with-ssl=/usr/include/openssl >/dev/null && \
-  make >/dev/null && make install >/dev/null && \
+  --with-java-home=$JAVA_HOME \
+  --with-apr=$withAPR \
+  --with-ssl=/usr/include/openssl 1>/dev/null 2>&1 && \
+  make 1>/dev/null 2>&1 && \
+  make install 1>/dev/null 2>&1
   cd "${currentDir}"
+  if ! ls /usr/lib64 | grep tcnative >/dev/null; then echo "  extract ${source} failed."; exit 1; fi
 fi
-
-[ -d $path ] || mkdir -p $path || exit 1
-
-url=$url_tomcat_src
-source=$tomcat_src
-echo "  Downloading Tomcat ..."
-curl -fjkL $url \
--o $workDir/$source
-tar xf $workDir/$source -C $workDir
-mv $workDir/$(echo $source | sed -e 's/\.[^0-9]*$//g')/* $path/.
 
 echo "  install tomcat daemon ..."
-if [ $(rpm -qa automake gcc | wc -l) -ne 2 ]; then
-  yum install -y -q automake gcc >/dev/null || exit 1
-fi
-tar xf /usr/share/tomcat8/bin/commons-daemon-native.tar.gz -C /tmp
-cd /tmp/commons-daemon-1.0.15-native-src/unix
+echo "  check build dependencies ..."
+[ -n $(rpm -qa automake) ] || yum install -y -q automake 1>/dev/null
+if [ -z $(rpm -qa automake) ]; then echo -e "  install package \"automake\" first."; exit 1; fi
+[ -n $(rpm -qa gcc) ] || yum install -y -q gcc 1>/dev/null
+if [ -z $(rpm -qa gcc) ]; then echo -e "  install package \"gcc\" first."; exit 1; fi
+source=$(ls $tomcat_home/bin | grep commons-daemon-native.*.tar.gz)
+extracted=$(tar tf $tomcat_home/bin/$source | sed -n -e 1p | sed -e 's/\/.*//')
+tar xf $tomcat_home/bin/$source -C $workDir
+if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
+cd $workDir/$extracted/unix
 ./configure \
 --prefix=/usr \
 --libdir=/usr/lib64 \
---with-java=/usr/java/latest >/dev/null && \
-make >/dev/null && \
+--with-java=$JAVA_HOME 1>/dev/null 2>&1 && \
+make 1>/dev/null 2>&1
 cd "${currentDir}"
-cp /tmp/commons-daemon-1.0.15-native-src/unix/jsvc /usr/share/tomcat8/bin/jsvc
-rm -rf /tmp/commons-daemon-1.0.15-native-src 
+if [ ! -e $workDir/$extracted/unix/jsvc ]; then echo "  extract ${source} failed."; exit 1; fi
+mv $workDir/$extracted/unix/jsvc $tomcat_home/bin/jsvc
+if [ ! -e $tomcat_home/bin/jsvc ]; then echo "  set tomcat-daemon failed."; exit 1; fi
 
 echo "  building structure ..."
-mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
-chown root:tomcat -R /usr/share/tomcat8
-chmod 775 -R /usr/share/tomcat8
-rm -rf /usr/share/tomcat8/{logs,temp,work}
+mkdir -p $tomcat_home/conf/Catalina/localhost
+chown root:$owner -R $tomcat_home
+chmod 0775 -R $tomcat_home
+rm -rf $tomcat_home/{logs,temp,work}
 
 # bin
-rm -rf /usr/share/tomcat8/bin/*.bat
-chmod 0664 /usr/share/tomcat8/bin/*.*
-chmod +x /usr/share/tomcat8/bin/{jsvc,*.sh}
+rm -rf $tomcat_home/bin/*.bat
+chmod 0664 $tomcat_home/bin/*.*
+chmod +x $tomcat_home/bin/{jsvc,*.sh}
 
-#conf
-mv /usr/share/tomcat8/conf /etc/tomcat8
-ln -s /etc/tomcat8 /usr/share/tomcat8/conf
-chown tomcat:tomcat /etc/tomcat8/*.*
-chmod 0664 /etc/tomcat8/*.*
-chmod 0660 /etc/tomcat8/tomcat-users.xml
+# conf
+[ -d /etc/tomcat$ver ] && mv /etc/tomcat$ver /etc/tomcat$ver.$datetime
+mv $tomcat_home/conf /etc/tomcat$ver
+ln -s /etc/tomcat$ver $tomcat_home/conf
+chown $owner:$owner /etc/tomcat$ver/*.*
+chmod 0664 /etc/tomcat$ver/*.*
+chmod 0660 /etc/tomcat$ver/tomcat-users.xml
 
-#logs
-mkdir -p /var/log/tomcat8
-chown tomcat:tomcat /var/log/tomcat8
-chmod 0770 /var/log/tomcat8
-ln -s /var/log/tomcat8 /usr/share/tomcat8/logs
+# logs
+[ -d /var/log/tomcat$ver ] && mv /var/log/tomcat$ver /var/log/tomcat$ver.$datetime
+mkdir -p /var/log/tomcat$ver
+chown tomcat:tomcat /var/log/tomcat$ver
+chmod 0770 /var/log/tomcat$ver
+ln -s /var/log/tomcat$ver $tomcat_home/logs
 
-#temp,work
-mkdir -p /var/cache/tomcat8/{temp,work}
-chown tomcat:tomcat -R /var/cache/tomcat8
-chmod 0770 -R /var/cache/tomcat8
-ln -s /var/cache/tomcat8/temp /usr/share/tomcat8/temp
-ln -s /var/cache/tomcat8/work /usr/share/tomcat8/work
+# temp, work
+[ -d /var/cache/tomcat$ver ] && mv /var/cache/tomcat$ver /var/cache/tomcat$ver.$datetime
+mkdir -p /var/cache/tomcat$ver/{temp,work}
+chown $owner:$owner -R /var/cache/tomcat$ver
+chmod 0770 -R /var/cache/tomcat$ver
+ln -s /var/cache/tomcat$ver/temp $tomcat_home/temp
+ln -s /var/cache/tomcat$ver/work $tomcat_home/work
 
-#webapps
-mkdir -p /var/lib/tomcat8
-mv /usr/share/tomcat8/webapps /var/lib/tomcat8/webapps
-chown tomcat:tomcat -R /var/lib/tomcat8
-chmod 0770 /var/lib/tomcat8
-chmod 0775 -R /var/lib/tomcat8/webapps
-ln -s /var/lib/tomcat8/webapps /usr/share/tomcat8/webapps
+# webapps
+[ -d /var/lib/tomcat$ver ] && mv /var/lib/tomcat$ver /var/lib/tomcat$ver.$datetime
+mkdir -p /var/lib/tomcat$ver
+mv $tomcat_home/webapps /var/lib/tomcat$ver/webapps
+chown $owner:$owner -R /var/lib/tomcat$ver
+chmod 0770 /var/lib/tomcat$ver
+chmod 0775 -R /var/lib/tomcat$ver/webapps
+ln -s /var/lib/tomcat$ver/webapps $tomcat_home/webapps
 
-#instances
-mkdir -p /var/lib/tomcat8s
-chown tomcat:tomcat /var/lib/tomcat8s
-chmod 0775 /var/lib/tomcat8s
-ln -s /var/lib/tomcat8s /usr/share/tomcat8/instances
+# instances
+[ -d "/var/lib/tomcat${ver}s" ] && mv "/var/lib/tomcat${ver}s" "/var/lib/tomcat${ver}s.$datetime"
+mkdir -p "/var/lib/tomcat${ver}s"
+chown $owner:$owner "/var/lib/tomcat${ver}s"
+chmod 0775 "/var/lib/tomcat${ver}s"
+ln -s "/var/lib/tomcat${ver}s" $tomcat_home/instances
 
-#pid(s)
+# pid(s)
+[ -d /var/run/tomcat ] && mv /var/run/tomcat /var/run/tomcat.$datetime
 mkdir -p /var/run/tomcat
-chown tomcat:tomcat /var/run/tomcat
+chown $owner:$owner /var/run/tomcat
 chmod 0775 /var/run/tomcat
-ln -s /var/run/tomcat /usr/share/tomcat8/run
+ln -s /var/run/tomcat $tomcat_home/run
 
-sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' /usr/share/tomcat8/conf/tomcat-users.xml
-cat <<_EOT_>> /usr/share/tomcat8/conf/tomcat-users.xml
+# manager GUI
+[ -n $tomcat_manager ] && \
+sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' $tomcat_home/conf/tomcat-users.xml && \
+cat <<_EOT_>> $tomcat_home/conf/tomcat-users.xml
   <role rolename="admin-gui" />
   <role rolename="admin-script" />
   <role rolename="manager-gui" />
   <role rolename="manager-jmx" />
   <role rolename="manager-script" />
   <role rolename="manager-status" />
-  <user username="tomcat" password="tomcat" roles="admin-gui,manager-gui" />
+  <user username="${tomcat_manager}" password="${tomcat_manager_pw}" roles="admin-gui,admin-script,manager-gui,manager-jmx,manager-script,manager-status" />
 </tomcat-users>
 
 _EOT_
 
-cat <<_EOT_> /etc/sysconfig/tomcat8
-# Service-specific configuration file for tomcat. This will be sourced by
-# the SysV init script after the global configuration file
-# /etc/tomcat8/tomcat8.conf, thus allowing values to be overridden in
-# a per-service manner.
-#
-# NEVER change the init script itself. To change values for all services make
-# your changes in /etc/tomcat8/tomcat8.conf
-#
-# To change values for a specific service make your edits here.
-# To create a new service create a link from /etc/init.d/<your new service> to
-# /etc/init.d/tomcat8 (do not copy the init script) and make a copy of the
-# /etc/sysconfig/tomcat8 file to /etc/sysconfig/<your new service> and change
-# the property values so the two services won't conflict. Register the new
-# service in the system as usual (see chkconfig and similars).
-#
+# environments
+curl -fjkL https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/webserver/tomcat/sysconfig.tomcat$ver.conf \
+-o /etc/sysconfig/tomcat$ver
+chown root:$owner /etc/sysconfig/tomcat$ver
+chown 0644 /etc/sysconfig/tomcat$ver
 
-# Where your java installation lives
-#JAVA_HOME="/usr/lib/jvm/java"
-
-# Where your tomcat installation lives
-#CATALINA_BASE="/usr/share/tomcat8"
-#CATALINA_HOME="/usr/share/tomcat8"
-#JASPER_HOME="/usr/share/tomcat8"
-#CATALINA_TMPDIR="/var/cache/tomcat8/temp"
-
-# You can pass some parameters to java here if you wish to
-#JAVA_OPTS="-Xminf0.1 -Xmaxf0.3"
-
-# Use JAVA_OPTS to set java.library.path for libtcnative.so
-#JAVA_OPTS="-Djava.library.path=/usr/lib64"
-
-# What user should run tomcat
-#TOMCAT_USER="tomcat"
-
-# You can change your tomcat locale here
-#LANG="en_US"
-
-# Run tomcat under the Java Security Manager
-#SECURITY_MANAGER="false"
-
-# Time to wait in seconds, before killing process
-#SHUTDOWN_WAIT="30"
-
-# Whether to annoy the user with "attempting to shut down" messages or not
-#SHUTDOWN_VERBOSE="false"
-
-# Set the TOMCAT_PID location
-#CATALINA_PID="/var/run/tomcat8.pid"
-
-# Connector port is 8080 for this tomcat instance
-#CONNECTOR_PORT="8080"
-
-# If you wish to further customize your tomcat environment,
-# put your own definitions here
-# (i.e. LD_LIBRARY_PATH for some jdbc drivers)
-
-_EOT_
-chown root:tomcat /etc/sysconfig/tomcat8
-chmod 644 /etc/sysconfig/tomcat8
-
-cat <<_EOT_> /etc/tomcat8/tomcat8.conf
+cat <<_EOT_>> $tomcat_home/conf/tomcat$ver.conf
 # System-wide configuration file for tomcat services
 # This will be loaded by systemd as an environment file,
 # so please keep the syntax.
 #
 # There are 2 "classes" of startup behavior in this package.
 # The old one, the default service named tomcat.service.
-# The new named instances are called tomcat8@instance.service.
+# The new named instances are called tomcat$ver@instance.service.
 #
 # Use this file to change default values for all services.
 # Change the service specific ones to affect only one service.
-# For tomcat8.service it's /etc/sysconfig/tomcat8, for
-# tomcat8@instance it's /etc/sysconfig/tomcat8@instance.
+# For tomcat8.service it's /etc/sysconfig/tomcat$ver, for
+# tomcat$ver@instance it's /etc/sysconfig/tomcat$ver@instance.
 
 # This variable is used to figure out if config is loaded or not.
 TOMCAT_CFG_LOADED="1"
 
 # In new-style instances, if CATALINA_BASE isn't specified, it will
 # be constructed by joining TOMCATS_BASE and NAME.
-TOMCATS_BASE="/var/lib/tomcat8s/"
+TOMCATS_BASE="${tomcat_home}/instances/"
 
 # Where your java installation lives
 JAVA_HOME="${JAVA_HOME}"
 
 # Where your tomcat installation lives
-CATALINA_HOME="/usr/share/tomcat8"
+CATALINA_HOME="${tomcat_home}"
 
 # System-wide tmp
-CATALINA_TMPDIR="/usr/share/tomcat8/temp"
-
-# You can pass some parameters to java here if you wish to
-# Use JAVA_OPTS to set java.library.path for libtcnative.so
-#JAVA_OPTS="-Djava.library.path=/usr/lib"
+CATALINA_TMPDIR="${tomcat_home}/temp"
 
 # You can change your tomcat locale here
-#LANG="en_US"
+LANG="${LANG}"
 
 # Run tomcat under the Java Security Manager
 SECURITY_MANAGER="false"
@@ -275,13 +252,13 @@ SECURITY_MANAGER="false"
 # SHUTDOWN_WAIT="30"
 
 # Whether to annoy the user with "attempting to shut down" messages or not
-SHUTDOWN_VERBOSE="false"
+SHUTDOWN_VERBOSE="true"
 
 # Set the TOMCAT_PID location
-CATALINA_PID="/usr/share/tomcat8/run/tomcat8.pid"
+CATALINA_PID="${tomcat_home}/run/tomcat${ver}.pid"
 
 # Connector port is 8080 for this tomcat instance
-CONNECTOR_PORT="8080"
+#CONNECTOR_PORT="8080"
 
 # If you wish to further customize your tomcat environment,
 # put your own definitions here
@@ -292,14 +269,16 @@ CATALINA_OPTS="-Xloggc:/usr/share/tomcat8/logs/gc.log -XX:+PrintGCDetails"
 CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
-chown tomcat:tomcat /etc/tomcat8/tomcat8.conf
-chmod 664 /etc/tomcat8/tomcat8.conf
+[ $((echo "`java -version 2>&1`") | grep "java version" | cut -d "\"" -f 2 | cut -d "." -f 2) -gt 7 ] && \
+sed -i -e 's/PermSize/MetaSpaceSize/g' $tomcat_home/conf/tomcat$ver.conf
+chown tomcat:tomcat $tomcat_home/conf/tomcat$ver.conf
+chmod 0664 $tomcat_home/conf/tomcat$ver.conf
 
-cat <<_EOT_> /usr/lib/systemd/system/tomcat8.service
+cat <<_EOT_> /usr/lib/systemd/system/tomcat$ver.service
 # Systemd unit file for default tomcat
 # 
 # To create clones of this service:
-# DO NOTHING, use tomcat8@.service instead.
+# DO NOTHING, use tomcat$ver@.service instead.
 
 [Unit]
 Description=Apache Tomcat Web Application Container
@@ -307,60 +286,77 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-EnvironmentFile=/etc/tomcat8/tomcat8.conf
+EnvironmentFile=/etc/tomcat$ver/tomcat$ver.conf
 Environment="NAME="
-EnvironmentFile=-/etc/sysconfig/tomcat8
+EnvironmentFile=-/etc/sysconfig/tomcat$ver
 
 # replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
-# ExecStart=/usr/share/tomcat8/bin/daemon.sh start
-# ExecStop=/usr/share/tomcat8/bin/daemon.sh stop
-ExecStart=/usr/share/tomcat8/bin/startup.sh
-ExecStop=/usr/share/tomcat8/bin/shutdown.sh
+# ExecStart=/usr/share/tomcat$ver/bin/daemon.sh start
+# ExecStop=/usr/share/tomcat$ver/bin/daemon.sh stop
+ExecStart=/usr/share/tomcat$ver/bin/startup.sh
+ExecStop=/usr/share/tomcat$ver/bin/shutdown.sh
 
 SuccessExitStatus=143
-User=tomcat
-Group=tomcat
+User=$owner
+Group=$owner
 
 [Install]
 WantedBy=multi-user.target
 
 _EOT_
-chmod 644 /usr/lib/systemd/system/tomcat8.service
+chmod 0644 /usr/lib/systemd/system/tomcat$ver.service
 
-cat <<_EOT_> /usr/lib/systemd/system/tomcat8@.service
-# Systemd unit file for tomcat instances.
-# 
-# To create clones of this service:
-# 0. systemctl enable tomcat8@name.service
-# 1. create catalina.base directory structure in
-#    /var/lib/tomcat8s/name
-# 2. profit.
+cp -p /usr/lib/systemd/system/tomcat$ver.service \
+/usr/lib/systemd/system/tomcat$ver@.service
 
-[Unit]
-Description=Apache Tomcat Web Application Container
-After=syslog.target network.target
+sed -i -e "s/tomcat${ver}@/\0name/g" \
+-e 's/Environment="NAME=/\0\%I/g' \
+-e "s/EnvironmentFile=-\/etc\/sysconfig\/tomcat${ver}/\0@\%I/g" \
+/usr/lib/systemd/system/tomcat$ver@.service
+chmod 644 /usr/lib/systemd/system/tomcat$ver@.service
 
-[Service]
-Type=forking
-EnvironmentFile=/etc/tomcat8/tomcat8.conf
-Environment="NAME=%I"
-EnvironmentFile=-/etc/sysconfig/tomcat8@%I
+sed -i -e "s/Server port=\"8005\"/Server port=\"\${server.port.shutdown}\"/g" \
+-e "s/Connector port=\"8080\"/Connector port=\"\${connector.port}\"/g" \
+-e "s/Connector port=\"8009\"/Connector port=\"\${connector.port.ajp}\"/g" \
+-e "s/redirectPort=\"8443\"/redirectPort=\"\${connector.port.redirect}\"/g" \
+-e "s/Connector port=\"8443\"/Connector port=\"\${connector.port.ssl}\"/g" \
+$tomcat_home/conf/server.xml
 
-# replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
-# ExecStart=/usr/share/tomcat8/bin/daemon.sh start
-# ExecStop=/usr/share/tomcat8/bin/daemon.sh stop
-ExecStart=/usr/share/tomcat8/bin/startup.sh
-ExecStop=/usr/share/tomcat8/bin/shutdown.sh
+cat <<_EOT_>> $tomcat_home/conf/catalina.properties
 
-SuccessExitStatus=143
-User=tomcat
-Group=tomcat
-
-[Install]
-WantedBy=multi-user.target
+# Customized properties for server.xml
+server.port.shutdown=8005
+connector.port=8080
+connector.port.ajp=8009
+connector.port.redirect=8443
+connector.port.ssl=8443
 
 _EOT_
-chmod 644 /usr/lib/systemd/system/tomcat8@.service
+
+sed -i -e 's/<Engine name="Catalina" defaultHost="localhost">/<Engine name="Catalina" jvmRoute="origin" defaultHost="localhost">/' \
+-e 's/<\/Service>/<\!-- \n\0/' \
+-e 's/<\/Server>/\0\n -->/' \
+$tomcat_home/conf/server.xml
+
+sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
+sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
+
+if [ -e $sslCert ] && [ -e $sslKey ]; then
+  cat <<_EOT_>> $tomcat_home/conf/server.xml
+<!-- Define a SSL Coyote HTTP/1.1 Connector on port 8443 -->
+<Connector
+  protocol="org.apache.coyote.http11.Http11AprProtocol"
+  port="\${connector.port.ssl}" maxThreads="200"
+  scheme="https" secure="true" SSLEnabled="true"
+  SSLCertificateFile="${sslCert}"
+  SSLCertificateKeyFile="${sslKey}"
+  SSLVerifyClient="optional" SSLProtocol="TLSv1+TLSv1.1+TLSv1.2"/>
+
+</Service>
+</Server>
+
+_EOT_
+fi
 
 echo "Done."
 exit 0
