@@ -94,7 +94,7 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   fi
 
   if [ -z $(rpm -qa openssl-devel) ]; then
-    [ -z $(yum repolist --disableplugin=* --disablerepo=* --enablerepo=furplag.github.io | grep -E "^\!?furplag") ] || \
+    `yum repolist --disableplugin=* --disablerepo=* --enablerepo=furplag.github.io | grep -E "^\!?furplag" >/dev/null` || \
     yum install -y -q openssl-devel --enablerepo=furplag.github.io 1>/dev/null || yum install -y -q openssl-devel
     if [ -z $(rpm -qa openssl-devel) ]; then echo "  install package \"openssl-devel\" first."; exit 1; fi
   fi
