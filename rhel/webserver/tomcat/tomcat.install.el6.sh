@@ -278,9 +278,360 @@ _EOT_
 sed -i -e 's/PermSize/MetaSpaceSize/g' $tomcat_home/conf/tomcat$ver.conf
 chown $owner:$owner $tomcat_home/conf/tomcat$ver.conf
 chmod 0664 $tomcat_home/conf/tomcat$ver.conf
+#!/bin/bash
 
-#[TODO] cat <<_EOT_> /etc/rc.d/init.d/tomcat$ver
-#_EOT_
+if [ -r /usr/share/java-utils/java-functions ]; then
+  . /usr/share/java-utils/java-functions
+else
+  echo "Can't read Java functions library, aborting"
+  exit 1
+fi
+
+# Get the tomcat config (use this for environment specific settings)
+if [ -z "\${TOMCAT_CFG}" ]; then
+  TOMCAT_CFG="/etc/tomcat${ver}/tomcat${ver}.conf"
+fi
+
+if [ -r "\$TOMCAT_CFG" ]; then
+  . \$TOMCAT_CFG
+  CATALINA_BASE=\${CATALINA_BASE:-\${CATALINA_HOME}}
+fi
+
+# Only source the sysconfig file if TOMCAT_NAME or NAME is defined
+# This prevents issues when defining NAME in the config file while
+# still allowing the NAME environment variable to be set when executing
+# this script
+# By default the init script exports TOMCAT_NAME
+if [ -n "\${TOMCAT_NAME}" -a -r "/etc/sysconfig/\${TOMCAT_NAME}" ]; then
+    . /etc/sysconfig/\${TOMCAT_NAME}
+elif [ -n "\${NAME}" -a -r "/etc/sysconfig/\${NAME}" ]; then
+    . /etc/sysconfig/\${NAME}
+fi
+
+set_javacmd
+# CLASSPATH munging
+if [ -n "\$JSSE_HOME" ]; then
+  CLASSPATH="\${CLASSPATH}:\$(build-classpath jcert jnet jsse 2>/dev/null)"
+fi
+CLASSPATH="\${CLASSPATH}:\${CATALINA_HOME}/bin/bootstrap.jar"
+CLASSPATH="\${CLASSPATH}:\${CATALINA_HOME}/bin/tomcat-juli.jar"
+CLASSPATH="\${CLASSPATH}:\$(build-classpath commons-daemon 2>/dev/null)"
+
+if [ "\$1" = "start" ]; then
+  \${JAVACMD} \$JAVA_OPTS \$CATALINA_OPTS \
+    -classpath "\$CLASSPATH" \
+    -Dcatalina.base="\$CATALINA_BASE" \
+    -Dcatalina.home="\$CATALINA_HOME" \
+    -Djava.endorsed.dirs="\$JAVA_ENDORSED_DIRS" \
+    -Djava.io.tmpdir="\$CATALINA_TMPDIR" \
+    -Djava.util.logging.config.file="\${CATALINA_BASE}/conf/logging.properties" \
+    -Djava.util.logging.manager="org.apache.juli.ClassLoaderLogManager" \
+    org.apache.catalina.startup.Bootstrap start \
+    >> \${CATALINA_BASE}/logs/catalina.out 2>&1 &
+    if [ ! -z "\$CATALINA_PID" ]; then
+      echo \$! > \$CATALINA_PID
+    fi
+elif [ "\$1" = "start-security" ]; then
+  \${JAVACMD} \$JAVA_OPTS \$CATALINA_OPTS \
+    -classpath "\$CLASSPATH" \
+    -Dcatalina.base="\$CATALINA_BASE" \
+    -Dcatalina.home="\$CATALINA_HOME" \
+    -Djava.endorsed.dirs="\$JAVA_ENDORSED_DIRS" \
+    -Djava.io.tmpdir="\$CATALINA_TMPDIR" \
+    -Djava.security.manager \
+    -Djava.security.policy=="\${CATALINA_BASE}/conf/catalina.policy" \
+    -Djava.util.logging.config.file="\${CATALINA_BASE}/conf/logging.properties" \
+    -Djava.util.logging.manager="org.apache.juli.ClassLoaderLogManager" \
+    org.apache.catalina.startup.Bootstrap start \
+    >> \${CATALINA_BASE}/logs/catalina.out 2>&1 &
+    if [ ! -z "\$CATALINA_PID" ]; then
+      echo \$! > \$CATALINA_PID
+    fi
+elif [ "\$1" = "stop" ]; then
+  \${JAVACMD} \$JAVA_OPTS \
+    -classpath "\$CLASSPATH" \
+    -Dcatalina.base="\$CATALINA_BASE" \
+    -Dcatalina.home="\$CATALINA_HOME" \
+    -Djava.endorsed.dirs="\$JAVA_ENDORSED_DIRS" \
+    -Djava.io.tmpdir="\$CATALINA_TMPDIR" \
+    org.apache.catalina.startup.Bootstrap stop \
+    >> \${CATALINA_BASE}/logs/catalina.out 2>&1
+elif [ "\$1" = "version" ]; then
+  \${JAVACMD} -classpath \${CATALINA_HOME}/lib/catalina.jar \
+    org.apache.catalina.util.ServerInfo
+else
+  echo "Usage: \$0 {start|start-security|stop|version}"
+  exit 1
+fi
+
+cat <<_EOT_> /usr/sbin/tomcat$ver
+
+_EOT_
+chmod 0755 /usr/sbin/tomcat$ver
+
+cat <<_EOT_> /etc/rc.d/init.d/tomcat$ver
+#!/bin/bash
+#
+# tomcat       start and stop tomcat
+# chkconfig: - 80 20
+#
+### BEGIN INIT INFO
+# Provides: tomcat
+# Required-Start: \$network \$syslog
+# Required-Stop: \$network \$syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 1 6
+# Description: Release implementation for Servlet 3.0 and JSP 2.2
+# Short-Description: start and stop tomcat
+### END INIT INFO
+
+## load functions.
+. /etc/rc.d/init.d/functions
+NAME="\$(basename \$0)"
+
+unset ISBOOT
+if [ "\${NAME:0:1}" = "S" -o "\${NAME:0:1}" = "K" ]; then
+  NAME="\${NAME:3}"
+  ISBOOT="1"
+fi
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x "/sbin/runuser" ]; then
+  SU="/sbin/runuser -s /bin/sh"
+else
+  SU="/bin/su -s /bin/sh"
+fi
+
+# load default config.
+[ -r "/etc/sysconfig/\${NAME}" ] && . /etc/sysconfig/\${NAME}
+
+# load tomcat config.
+TOMCAT_CFG="/etc/tomcat${ver}/tomcat${ver}.conf"
+[ -r "\$TOMCAT_CFG" ] && . \$TOMCAT_CFG
+
+# Define Settings.
+#CONNECTOR_PORT="\${CONNECTOR_PORT:-8080}"
+TOMCAT_SCRIPT="/usr/sbin/tomcat${ver}"
+TOMCAT_PROG="\${NAME}"
+TOMCAT_USER="\${TOMCAT_USER:-${owner}}"
+TOMCAT_LOG="\${TOMCAT_LOG:-\${CATALINA_HOME}/logs/\${NAME}-initd.log}"
+SHUTDOWN_WAIT="\${SHUTDOWN_WAIT:-\${KILL_SLEEP_WAIT:-5}}"
+CATALINA_PID="\${CATALINA_PID:-/var/run/\${NAME}.pid}"
+
+RETVAL="0"
+
+function parseOptions() {
+  options="export TOMCAT_NAME=\${NAME};export TOMCAT_CFG=\${TOMCAT_CFG};"
+  options="\$options \$(awk '!/^#/ && !/^\$/ { ORS=" "; print "export ", \$0, ";" }' \$TOMCAT_CFG)"
+  [ -r "/etc/sysconfig/\${NAME}" ] && options="\$options \$(awk '!/^#/ && !/^\$/ { ORS=" ";print "export ", \$0, ";" }' /etc/sysconfig/\${NAME})"
+  TOMCAT_SCRIPT="\$options \${TOMCAT_SCRIPT}"
+}
+
+# See how we were called.
+function start() {
+  echo -n "Starting \${TOMCAT_PROG}: "
+  if [ "\$RETVAL" != "0" ]; then 
+   failure
+   return
+  fi
+  if [ -f "/var/lock/subsys/\${NAME}" ]; then
+    if [ -s "\${CATALINA_PID}" ]; then
+      read kpid < \$CATALINA_PID
+      if [ -d "/proc/\${kpid}" ]; then
+        success
+        return 0
+      fi
+    fi
+  fi
+  # fix permissions on the log and pid files
+  touch \$CATALINA_PID 2>&1 || RETVAL="4"
+  [ "\$RETVAL" -eq "0" -a "\$?" -eq "0" ] && chown \${TOMCAT_USER}:\${TOMCAT_USER} \$CATALINA_PID
+  [ "\$RETVAL" -eq "0" ] && touch \$TOMCAT_LOG 2>&1 || RETVAL="4" 
+  [ "\$RETVAL" -eq "0" -a "\$?" -eq "0" ] && chown \${TOMCAT_USER}:\${TOMCAT_USER} \$TOMCAT_LOG
+
+  parseOptions
+
+  if [ "\$RETVAL" -eq "0" -a "\$SECURITY_MANAGER" = "true" ]; then
+    \$SU - \$TOMCAT_USER -c "\${TOMCAT_SCRIPT} start-security" >> \${TOMCAT_LOG} 2>&1 || RETVAL="4"
+  else
+    [ "\$RETVAL" -eq "0" ] && \$SU - \$TOMCAT_USER -c "\${TOMCAT_SCRIPT} start" >> \${TOMCAT_LOG} 2>&1 || RETVAL="4"
+  fi
+  if [ "\$RETVAL" -eq "0" ]; then 
+    touch /var/lock/subsys/\${NAME}
+    success
+  else
+    echo -n "Error code \${RETVAL}"
+    failure
+  fi
+}
+
+function stop() {
+  #check to see if pid file is good. We only want to stop tomcat8 if 
+  #we started it from this init script
+  running_pid=\$(pgrep -f "org.apache.catalina.startup.Bootstrap start")
+  if [ -f \$CATALINA_PID ]; then
+    read kpid junk< \$CATALINA_PID
+    if [ -z "\${kpid}" ]; then
+      echo -n "PID file empty"
+      rm -f /var/lock/subsys/\${NAME} \$CATALINA_PID
+      failure
+      exit 4 
+    fi
+    if [ -z "\$running_pid" ]; then
+      echo -n "no \${NAME} running, but pid file exists - cleaning up"
+      rm -f /var/lock/subsys/\${NAME} \$CATALINA_PID
+      success
+      exit 0
+    fi
+    if [ -z "\$(echo \${kpid} | fgrep -x "\${running_pid}")" ]; then
+      echo -n "PID file does not match pid of any running \${NAME}"
+      failure
+      rm -f /var/lock/subsys/\${NAME} \$CATALINA_PID
+      exit 4
+    fi
+
+    parseOptions
+
+    #stop tomcat
+    echo -n "Stopping \${TOMCAT_PROG}: "
+    \$SU - \$TOMCAT_USER -c "\${TOMCAT_SCRIPT} stop" >> \${TOMCAT_LOG} 2>&1 || RETVAL="4"
+    if [ "\$RETVAL" -eq "4" ]; then
+      sleep 1
+      if [ "\$SHUTDOWN_VERBOSE" = "true" ]; then
+          echo "Failed to stop \${NAME} normally, sending a graceful kill."
+      fi
+      kill \$kpid > /dev/null 2>&1
+      sleep 1
+    fi
+
+    #wait for tomcat to really shutdown
+    count=0
+    until [ "\$(ps --pid \$kpid | grep -c \$kpid)" -eq "0" ] || [ "\$count" -gt "\$SHUTDOWN_WAIT" ]; do
+      if [ "\$SHUTDOWN_VERBOSE" = "true" ]; then
+        echo "waiting for processes \${NAME} (\$kpid) to exit"
+      fi
+      sleep 1
+      let count="\${count}+1"
+    done
+    if [ "\$count" -gt "\$SHUTDOWN_WAIT" ]; then
+      if [ "\${SHUTDOWN_VERBOSE}" = "true" ]; then
+        echo -n "Failed to stop \${NAME} (\$kpid) gracefully after \$SHUTDOWN_WAIT seconds, sending SIGKILL."
+      fi
+      kill -9 \$kpid
+      if [ "\$SHUTDOWN_VERBOSE" = "true" ]; then
+        echo "Waiting for \${NAME} (\$kpid) to exit."
+      fi
+      count=0
+      until [ "\$(ps --pid \$kpid | grep -c \$kpid)" -eq "0" ] || [ "\$count" -gt "\$SHUTDOWN_WAIT" ]; do
+        if [ "\$SHUTDOWN_VERBOSE" = "true" ]; then
+          echo "waiting for \${NAME} (\$kpid) to exit. It could be in the UNINTERRUPTIBLE state"
+        fi
+        sleep 1
+        let count="\${count}+1"
+      done
+      warning
+    fi
+    #check to make sure tomcat is gone
+    if [ "\$(ps --pid \$kpid | grep -c \$kpid)" -eq "0" ]; then
+      rm -f /var/lock/subsys/\${NAME} \$CATALINA_PID
+      RETVAL="0"
+      success
+    else
+      echo -n "Unable to stop \${NAME} (\$kpid)"
+      RETVAL="4"
+      failure
+    fi
+  elif [ -n "\$running_pid" ]; then
+    echo -n "\${NAME} running, but no pid file"
+    failure
+    RETVAL="4"
+  else
+    success
+  fi
+
+  return \$RETVAL
+}
+
+function usage() {
+   echo "Usage: \$0 {start|stop|restart|condrestart|try-restart|reload|force-reload|status|version}"
+   RETVAL="2"
+}
+
+function rh_status() {
+    status -p \$CATALINA_PID \${NAME}
+}
+
+function rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+# See how we were called.
+RETVAL="0"
+case "\$1" in
+  start)
+    rh_status_q && exit 0
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  condrestart|try-restart)
+    if [ -s "\${CATALINA_PID}" ]; then
+      stop
+      start
+    fi
+    ;;
+  reload)
+    RETVAL="3"
+    ;;
+  force-reload)
+    if [ -s "\${CATALINA_PID}" ]; then
+      stop
+      start
+    fi
+    ;;
+  status)
+    if [ -s "\${CATALINA_PID}" ]; then
+      read kpid junk < \$CATALINA_PID
+      if [ -d "/proc/\${kpid}" ]; then
+        echo -n "\${NAME} (pid \${kpid}) is running..."
+        success
+        RETVAL="0"
+      else
+        # The pid file exists but the process is not running
+        echo -n "PID file exists, but process is not running"
+        warning
+        RETVAL="1"
+      fi
+    else
+      pid="\$(/usr/bin/pgrep -d , -u \${TOMCAT_USER} -G \${TOMCAT_USER} java)"
+      if [ -z "\$pid" ]; then
+        echo "\${NAME} is stopped"
+        success
+        RETVAL="3"
+      else
+        echo "\${NAME} (pid \$pid) is running, but PID file is missing"
+        success
+        RETVAL="0"
+      fi
+    fi
+    ;;
+  version)
+    \${TOMCAT_SCRIPT} version
+    ;;
+  *)
+    usage
+    ;;
+esac
+
+exit \$RETVAL
+
+_EOT_
+chmod 0755 /etc/rc.d/init.d/tomcat$ver
 
 sed -i -e "s/Server port=\"8005\"/Server port=\"\${server.port.shutdown}\"/g" \
 -e "s/Connector port=\"8080\"/Connector port=\"\${connector.port}\"/g" \
