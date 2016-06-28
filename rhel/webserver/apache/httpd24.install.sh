@@ -1,5 +1,5 @@
 #!/bin/bash
-releasever=7
+releasever=$(cat /etc/redhat-release | sed -n -e 1p | sed -e 's/^.*release *//' | cut -d '.' -f 1)
 
 yum install -y epel-release \
 "http://www.city-fan.org/ftp/contrib/yum-repo/city-fan.org-release-1-13.rhel${releasever}.noarch.rpm" \
