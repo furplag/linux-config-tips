@@ -286,6 +286,8 @@ _EOT_
 sed -i -e 's/PermSize/MetaSpaceSize/g' $tomcat_home/conf/tomcat$ver.conf
 chown $owner:$owner $tomcat_home/conf/tomcat$ver.conf
 chmod 0664 $tomcat_home/conf/tomcat$ver.conf
+
+cat <<_EOT_> /usr/sbin/tomcat$ver
 #!/bin/bash
 
 if [ -r /usr/share/java-utils/java-functions ]; then
@@ -371,8 +373,6 @@ else
   echo "Usage: \$0 {start|start-security|stop|version}"
   exit 1
 fi
-
-cat <<_EOT_> /usr/sbin/tomcat$ver
 
 _EOT_
 chmod 0755 /usr/sbin/tomcat$ver
