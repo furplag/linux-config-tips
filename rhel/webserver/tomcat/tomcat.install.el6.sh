@@ -15,7 +15,7 @@ export LC_ALL=C
 #   5. Enable Tomcat Manager.
 # Requirements
 #   1. environment named "JAVA_HOME".
-#   2. dependency packages to build Tomcat native: apr-devel, automake, gcc, openssl-devel.
+#   2. dependency packages to build Tomcat native: apr-devel, automake, gcc, jpackage-utils, openssl-devel.
 
 ## variables
 declare -r name=`basename $0`
@@ -62,6 +62,14 @@ fi
 
 url=$url_tomcat_src
 source=$tomcat_src
+
+echo "  Install jpackage-utils ..."
+if [ $(rpm -qa jpackage-utils | wc -l) -lt 1 ]; then
+  if ! yum install -y -q jpackage-utils >/dev/null; then
+    echo -e "  install package \"jpackage-utils\" first."
+    exit 1
+  fi
+fi
 
 echo "  Downloading Tomcat ..."
 curl -fjkL $url -o $workDir/$source
@@ -651,15 +659,16 @@ connector.port.ssl=8443
 
 _EOT_
 
-sed -i -e 's/<Engine name="Catalina" defaultHost="localhost">/<Engine name="Catalina" jvmRoute="origin" defaultHost="localhost">/' \
--e 's/<\/Service>/<\!-- \n\0/' \
--e 's/<\/Server>/\0\n -->/' \
-$tomcat_home/conf/server.xml
-
-sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
-sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
-
-if [ -e $sslCert ] && [ -e $sslKey ]; then
+if [ -r /etc/httpd/conf.d/ssl.conf ]; then
+  sed -i -e 's/<Engine name="Catalina" defaultHost="localhost">/<Engine name="Catalina" jvmRoute="origin" defaultHost="localhost">/' \
+  -e 's/<\/Service>/<\!-- \n\0/' \
+  -e 's/<\/Server>/\0\n -->/' \
+  $tomcat_home/conf/server.xml
+  
+  sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
+  sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
+  
+  if [ -e $sslCert ] && [ -e $sslKey ]; then
   cat <<_EOT_>> $tomcat_home/conf/server.xml
 <!-- Define a SSL Coyote HTTP/1.1 Connector on port 8443 -->
 <Connector
@@ -674,6 +683,7 @@ if [ -e $sslCert ] && [ -e $sslKey ]; then
 </Server>
 
 _EOT_
+  fi
 fi
 
 echo "Done."
