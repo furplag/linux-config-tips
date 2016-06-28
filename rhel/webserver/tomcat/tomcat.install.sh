@@ -25,6 +25,7 @@ declare -r workDir=/tmp/$name.$datetime
 
 declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
 #declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-9/v9.0.0.M8/bin/apache-tomcat-9.0.0.M8.tar.gz
+#declare -r url_tomcat_src=file:///root/apache-tomcat-8.0.35.tar.gz
 declare -r tomcat_src=$(echo $url_tomcat_src | sed -e 's/^.*\///g')
 
 declare -r owner=tomcat
@@ -41,14 +42,11 @@ declare source=
 declare extracted=
 
 declare -r JAVA_HOME=${JAVA_HOME:-$(echo $(readlink -e $(which java 2>/dev/null)) | sed -e 's/\/bin\/java$//')}
-
-`systemctl status tomcat$ver >/dev/null` && echo "  Tomcat ${ver} already exits." && exit 0
-
-[ -d $tomcat_home ] && echo "  Tomcat ${ver} already exits."
-[ -d $tomcat_home ] && mv $tomcat_home $tomcat_home.saved.$datetime
+declare withAPR=
 
 [ -z $JAVA_HOME ] && echo "  Lost Java, install JDK first." && exit 1
-systemctl status tomcat$ver >/dev/null && echo "  tomcat$ver already exist." exit 0
+[ -e /usr/lib/systemd/system/tomcat8.service ] && echo "  tomcat$ver already exist." && exit 0
+[ -d $tomcat_home ] && mv $tomcat_home $tomcat_home.saved.$datetime
 
 if ! grep -e "^${owner}" /etc/group >/dev/null; then
   echo "  create group: ${owner} (${gid})."
@@ -57,7 +55,7 @@ fi
 
 if ! grep -e "^${owner}" /etc/passwd >/dev/null; then
   echo "  create user: ${owner} (${uid})."
-  useradd -u $uid $owner -U -d $tomcat_home -s /sbin/nologin
+  useradd -u $uid $owner -g $owner -d /usr/share/tomcat -s /sbin/nologin
 fi
 
 [ -d $workDir ] || mkdir -p $workDir || exit 1
@@ -74,30 +72,64 @@ if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1
 mv $workDir/$extracted $tomcat_home
 if [ ! -d $tomcat_home ]; then echo "  set tomcat${ver} to ${path} failed."; exit 1; fi
 
+echo "  install tomcat daemon ..."
+echo "  check build dependencies ..."
+# automake
+if [ $(rpm -qa automake | wc -l) -lt 1 ]; then
+  if ! yum install -y -q automake >/dev/null; then
+    echo -e "  install package \"automake\" first."
+    exit 1
+  fi
+fi
+# gcc
+if [ $(rpm -qa gcc | grep x86_64 | wc -l) -lt 1 ]; then
+  if ! yum install -y -q gcc >/dev/null; then
+    echo -e "  install package \"gcc\" first."
+    exit 1
+  fi
+fi
+source=$(ls $tomcat_home/bin | grep commons-daemon-native.*.tar.gz)
+extracted=$(tar tf $tomcat_home/bin/$source | sed -n -e 1p | sed -e 's/\/.*//')
+tar xf $tomcat_home/bin/$source -C $workDir
+if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
+cd $workDir/$extracted/unix
+./configure \
+--prefix=/usr \
+--libdir=/usr/lib64 \
+--with-java=$JAVA_HOME 1>/dev/null 2>&1 && \
+make 1>/dev/null 2>&1
+
+cd "${currentDir}"
+if [ ! -e $workDir/$extracted/unix/jsvc ]; then echo "  extract ${source} failed."; exit 1; fi
+mv $workDir/$extracted/unix/jsvc $tomcat_home/bin/jsvc
+if [ ! -e $tomcat_home/bin/jsvc ]; then echo "  set tomcat-daemon failed."; exit 1; fi
+
+# Install Tomcat native (source included).
 if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   echo "  install tomcat native ..."
   echo "  check build dependencies ..."
-  [ -n $(rpm -qa automake) ] || yum install -y -q automake 1>/dev/null
-  if [ -z $(rpm -qa automake) ]; then echo -e "  install package \"automake\" first."; exit 1; fi
-  [ -n $(rpm -qa gcc) ] || yum install -y -q gcc 1>/dev/null
-  if [ -z $(rpm -qa automake) ]; then echo -e "  install package \"gcc\" first."; exit 1; fi
-  if [ -z $(rpm -qa | grep -e "apr.*-devel") ]; then
-    [ -z $(yum repolist --disableplugin=* --disablerepo=* --enablerepo=ius | grep -e "^ius") ] || \
-    if yum install -y -q apr15u-devel --enablerepo=ius 1>/dev/null; then
-      withAPR=/usr/bin/apr15u-1-config
+  # apr-devel
+  if [ $(rpm -qa apr*-devel | grep x86_64 | wc -l) -lt 1 ]; then
+    if yum repolist --disableplugin=* --disablerepo=* --enablerepo=ius 1>/dev/null 2>&1; then
+      if yum install -y -q apr15u-devel --enablerepo=ius >/dev/null; then withAPR=/usr/bin/apr15u-1-config; fi   
     elif yum install -y -q apr-devel >/dev/null; then
       withAPR=/usr/bin/apr-1-config
-    else
-      echo -e "  install package \"apr-devel\" first."
-      exit 1
     fi
+  elif [ $(rpm -qa apr15u-devel | grep x86_64 | wc -l) -gt 0 ]; then
+    withAPR=/usr/bin/apr15u-1-config
+  elif [ $(rpm -qa apr-devel | grep x86_64 | wc -l) -gt 0 ]; then
+    withAPR=/usr/bin/apr-1-config
   fi
+  [ -z $withAPR ] && echo -e "  install package \"apr-devel\" first." && exit 1
 
-  if [ -z $(rpm -qa openssl-devel) ]; then
-    `yum repolist --disableplugin=* --disablerepo=* --enablerepo=furplag.github.io | grep -E "^\!?furplag" >/dev/null` || \
-    yum install -y -q openssl-devel --enablerepo=furplag.github.io 1>/dev/null || yum install -y -q openssl-devel
-    if [ -z $(rpm -qa openssl-devel) ]; then echo "  install package \"openssl-devel\" first."; exit 1; fi
+  # openssl-devel
+  if [ $(rpm -qa openssl-devel | grep x86_64 | wc -l) -lt 1 ]; then
+    if yum repolist --disableplugin=* --disablerepo=* --enablerepo=furplag.github.io 1>/dev/null 2>&1; then
+      yum install -y -q openssl-devel --enablerepo=furplag.github.io >/dev/null
+    fi
+    [ $(rpm -qa openssl-devel | grep x86_64 | wc -l) -lt 1 ] && yum install -y -q openssl-devel >/dev/null
   fi
+  [ $(rpm -qa openssl-devel | grep x86_64 | wc -l) -lt 1 ] && echo -e "  install package \"openssl-devel\" first." && exit 1
 
   source=$(ls $tomcat_home/bin | grep tomcat-native.*.tar.gz)
   extracted=$(tar tf $tomcat_home/bin/$source | sed -n -e 1p | sed -e 's/\/.*//')
@@ -115,27 +147,6 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   cd "${currentDir}"
   if ! ls /usr/lib64 | grep tcnative >/dev/null; then echo "  extract ${source} failed."; exit 1; fi
 fi
-
-echo "  install tomcat daemon ..."
-echo "  check build dependencies ..."
-[ -n $(rpm -qa automake) ] || yum install -y -q automake 1>/dev/null
-if [ -z $(rpm -qa automake) ]; then echo -e "  install package \"automake\" first."; exit 1; fi
-[ -n $(rpm -qa gcc) ] || yum install -y -q gcc 1>/dev/null
-if [ -z $(rpm -qa gcc) ]; then echo -e "  install package \"gcc\" first."; exit 1; fi
-source=$(ls $tomcat_home/bin | grep commons-daemon-native.*.tar.gz)
-extracted=$(tar tf $tomcat_home/bin/$source | sed -n -e 1p | sed -e 's/\/.*//')
-tar xf $tomcat_home/bin/$source -C $workDir
-if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
-cd $workDir/$extracted/unix
-./configure \
---prefix=/usr \
---libdir=/usr/lib64 \
---with-java=$JAVA_HOME 1>/dev/null 2>&1 && \
-make 1>/dev/null 2>&1
-cd "${currentDir}"
-if [ ! -e $workDir/$extracted/unix/jsvc ]; then echo "  extract ${source} failed."; exit 1; fi
-mv $workDir/$extracted/unix/jsvc $tomcat_home/bin/jsvc
-if [ ! -e $tomcat_home/bin/jsvc ]; then echo "  set tomcat-daemon failed."; exit 1; fi
 
 echo "  building structure ..."
 mkdir -p $tomcat_home/conf/Catalina/localhost
@@ -269,13 +280,13 @@ CATALINA_PID="${tomcat_home}/run/tomcat${ver}.pid"
 # (i.e. LD_LIBRARY_PATH for some jdbc drivers)
 CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8"
 CATALINA_OPTS="-Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m"
-CATALINA_OPTS="-Xloggc:/usr/share/tomcat8/logs/gc.log -XX:+PrintGCDetails"
+CATALINA_OPTS="-Xloggc:${tomcat_home}/logs/gc.log -XX:+PrintGCDetails"
 CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
 [ $((echo "`java -version 2>&1`") | grep "java version" | cut -d "\"" -f 2 | cut -d "." -f 2) -gt 7 ] && \
 sed -i -e 's/PermSize/MetaSpaceSize/g' $tomcat_home/conf/tomcat$ver.conf
-chown tomcat:tomcat $tomcat_home/conf/tomcat$ver.conf
+chown $owner:$owner $tomcat_home/conf/tomcat$ver.conf
 chmod 0664 $tomcat_home/conf/tomcat$ver.conf
 
 cat <<_EOT_> /usr/lib/systemd/system/tomcat$ver.service
@@ -295,10 +306,10 @@ Environment="NAME="
 EnvironmentFile=-/etc/sysconfig/tomcat$ver
 
 # replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
-# ExecStart=/usr/share/tomcat$ver/bin/daemon.sh start
-# ExecStop=/usr/share/tomcat$ver/bin/daemon.sh stop
-ExecStart=/usr/share/tomcat$ver/bin/startup.sh
-ExecStop=/usr/share/tomcat$ver/bin/shutdown.sh
+# ExecStart=$tomcat_home/bin/daemon.sh start
+# ExecStop=$tomcat_home/bin/daemon.sh stop
+ExecStart=$tomcat_home/bin/startup.sh
+ExecStop=$tomcat_home/bin/shutdown.sh
 
 SuccessExitStatus=143
 User=$owner
