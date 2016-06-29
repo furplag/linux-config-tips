@@ -30,7 +30,7 @@ enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
 ```
-or [rpmbuild](../../).
+or [rpmbuild](../../rpmbuild.md).
 
 
 ## Quickstart
