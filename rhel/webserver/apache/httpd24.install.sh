@@ -35,9 +35,9 @@ _EOT_
 yum install -y -q openssl --enablerepo=furplag.github.io >/dev/null
 yum install -y -q nghttp2 libnghttp2 --enablerepo=epel >/dev/null
 if [ "$releasever" -gt 6 ]; then
-  yum install -y -q libmetalink libpsl libssh2 --enablerepo=city-fan.org >/dev/null
+  yum install -y -q c-ares libmetalink libpsl libssh2 --enablerepo=city-fan.org >/dev/null
 else
-  yum install -y -q libmetalink libssh2 --enablerepo=city-fan.org >/dev/null
+  yum install -y -q c-ares libmetalink libssh2 --enablerepo=city-fan.org >/dev/null
 fi
 yum install -y -q curl libcurl --enablerepo=furplag.github.io >/dev/null
 yum install -y -q apr15u apr15u-util --enablerepo=ius >/dev/null
