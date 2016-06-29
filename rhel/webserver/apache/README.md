@@ -3,9 +3,10 @@
 
 
 ## TL;DR
-1. [Install OpenSSL 1.0.2](#1_install_openssl_102) (or later) .
-2. [Install nghttp2](#2_install_nghttp2).
-3. [Install Apache 2.4 over SSL](#3_install_apache_24_over_ssl).
+1. [Install OpenSSL 1.0.2](#1-install-openssl-102) (or later) .
+2. [Install nghttp2](#2-install-nghttp2).
+3. [Install Apache 2.4 over SSL](#3-install-apache-24-over-ssl).
+4. [Configure Apache HTTP/2](#4-configure-apache-http2).
 
 ## Getting start
 
@@ -35,7 +36,7 @@ then
 # curl -fjkL https://raw.githubusercontent.com/furplag/linux-config-tips/yum-repo/RPM-GPG-KEY-furplag.github.io \
   -o /etc/pki/rpm-gpg/RPM-GPG-KEY-furplag.github.io
 
-# yum install -y openssl openssl-libs openssl-devel --enablerepo=furplag.github.io` .
+# yum install -y openssl openssl-libs --enablerepo=furplag.github.io
 ```
 
 or [rpmbuild](../../rpmbuild.md).
@@ -63,11 +64,31 @@ That's it.
 ```
 
 ### 3. Install Apache 2.4 over SSL
+Install Dependencies: Reopsitories (City-fan, IUS Community) .
+```bash
+# osVer=$(cat /etc/redhat-release | sed -n -e 1p | sed -e 's/^.*release *//' | cut -d '.' -f 1)
+# yum install -y \
+  https://dl.iuscommunity.org/pub/ius/stable/Redhat/$osVer/x86_64/ius-release-1.0-14.ius.$osVer.noarch.rpm \
+  http://www.city-fan.org/ftp/contrib/yum-repo/city-fan.org-release-1-13.rhel$osVer.noarch.rpm && \
+  sed -i -e 's/enabled=1/enabled=0/' /etc/yum.repos.d/{city-fan,ius}*.repo
+```
+Install Dependencies: APR (Apache Portable Runtime) (1.5 or later) from IUS Community.
+```bash
+# yum install -y -q apr15u apr15u-util --enablerepo=ius
+```
+then
+```bash
+# yum install -y httpd24u mod24u_ssl --enablerepo=city-fan.org,furplag.github.io
+```
+or `rpmbuild`.
+```bash
+# work in progress
+```
 
 ## Quickstart
 see [this](httpd24.install.sh).
 ```bash
-curl -LO https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/httpd24.install.sh && \
- chmod +x httpd24.install.sh && \
- ./httpd24.install.sh
+# curl -LO https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/java/httpd24.install.sh && \
+  chmod +x httpd24.install.sh && \
+  ./httpd24.install.sh
 ```
