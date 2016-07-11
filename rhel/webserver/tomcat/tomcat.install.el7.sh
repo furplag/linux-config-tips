@@ -136,6 +136,7 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   tar xf $tomcat_home/bin/$source -C $workDir
   if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
   cd $workDir/$extracted/native
+# TODO OpenSSL version check
   ./configure \
   --prefix=/usr \
   --libdir=/usr/lib64 \
