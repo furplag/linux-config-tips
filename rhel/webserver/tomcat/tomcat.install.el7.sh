@@ -348,15 +348,16 @@ connector.port.ssl=8443
 
 _EOT_
 
-sed -i -e 's/<Engine name="Catalina" defaultHost="localhost">/<Engine name="Catalina" jvmRoute="origin" defaultHost="localhost">/' \
--e 's/<\/Service>/<\!-- \n\0/' \
--e 's/<\/Server>/\0\n -->/' \
-$tomcat_home/conf/server.xml
+if [ -r /etc/httpd/conf.d/ssl.conf ]; then
+  sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
+  sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
+  
+  if [ -e $sslCert ] && [ -e $sslKey ]; then
+  sed -i -e 's/<Engine name="Catalina" defaultHost="localhost">/<Engine name="Catalina" jvmRoute="origin" defaultHost="localhost">/' \
+  -e 's/<\/Service>/<\!-- \n\0/' \
+  -e 's/<\/Server>/\0\n -->/' \
+  $tomcat_home/conf/server.xml
 
-sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
-sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
-
-if [ -e $sslCert ] && [ -e $sslKey ]; then
   cat <<_EOT_>> $tomcat_home/conf/server.xml
 <!-- Define a SSL Coyote HTTP/1.1 Connector on port 8443 -->
 <Connector
@@ -371,6 +372,7 @@ if [ -e $sslCert ] && [ -e $sslKey ]; then
 </Server>
 
 _EOT_
+  fi
 fi
 
 echo "Done."
