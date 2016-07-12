@@ -143,7 +143,7 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   if [ $($openssl_version | cut -d '.' -f 1) -lt 1 ]; then
     echo "  too old OpenSSL, update first"
     exit 1
-  elif [ $($openssl_version | cut -d '.' -f 3 | sed -e ) -lt 2 ]; then
+  elif [ $($openssl_version | cut -d '.' -f 3 | sed -e 's/[^0-9].*$//g') -lt 2 ]; then
     withSSL="yes"
     withSSLIgnoreVersion="--disable-openssl-version-check"
   else
