@@ -111,16 +111,19 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   echo "  install tomcat native ..."
   echo "  check build dependencies ..."
   # apr-devel
-  if [ $(rpm -qa apr*-devel | grep x86_64 | wc -l) -lt 1 ]; then
+  if [ $(rpm -qa apr15u-devel | grep x86_64 | wc -l) -lt 1 ]; then
     if yum repolist --disableplugin=* --disablerepo=* --enablerepo=ius 1>/dev/null 2>&1; then
-      if yum install -y -q apr15u-devel --enablerepo=ius >/dev/null; then withAPR=/usr/bin/apr15u-1-config; fi   
-    elif yum install -y -q apr-devel >/dev/null; then
-      withAPR=/usr/bin/apr-1-config
+      if yum install -y -q apr15u-devel --enablerepo=ius >/dev/null; then withAPR=/usr/bin/apr15u-1-config; fi
+    else
+      if ! yum install -y -q https://dl.iuscommunity.org/pub/ius/stable/Redhat/6/x86_64/ius-release-1.0-14.ius.el6.noarch.rpm >/dev/null; then
+        echo -e "  could not install repository \"IUS Community\"."
+        exit 1
+      fi
+      sed -i -e 's/enabled=1/enabled=0/' /etc/yum.repos.d/ius*.repo
+      if yum install -y -q apr15u-devel --enablerepo=ius >/dev/null; then withAPR=/usr/bin/apr15u-1-config; fi
     fi
   elif [ $(rpm -qa apr15u-devel | grep x86_64 | wc -l) -gt 0 ]; then
     withAPR=/usr/bin/apr15u-1-config
-  elif [ $(rpm -qa apr-devel | grep x86_64 | wc -l) -gt 0 ]; then
-    withAPR=/usr/bin/apr-1-config
   fi
   [ -z $withAPR ] && echo -e "  install package \"apr-devel\" first." && exit 1
 
