@@ -227,6 +227,7 @@ cat <<_EOT_>> $tomcat_home/conf/tomcat-users.xml
 
 _EOT_
 
+echo "  Setting up ..."
 # environments
 cat <<_EOT_> /etc/sysconfig/tomcat$ver
 # Service-specific configuration file for tomcat. This will be sourced by
@@ -659,6 +660,7 @@ connector.port.ssl=8443
 _EOT_
 
 if [ -r /etc/httpd/conf.d/ssl.conf ]; then
+  echo "  Setting SSL ..."
   sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
   sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
   
@@ -685,15 +687,16 @@ _EOT_
   fi
 fi
 
-if ! systemctl start tomcat8 1>/dev/null 2>&1; then
+echo "  Testing ..."
+if ! systemctl start tomcat$ver 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
-if ! systemctl status tomcat8 1>/dev/null 2>&1; then
+if ! systemctl status tomcat$ver 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
-if ! systemctl stop tomcat8 1>/dev/null 2>&1; then
+if ! systemctl stop tomcat$ver 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
