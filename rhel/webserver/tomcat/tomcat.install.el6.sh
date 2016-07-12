@@ -11,7 +11,7 @@ export LC_ALL=C
 #   1. Install Tomcat.
 #   2. Install Tomcat Native.
 #   3. Enable Tomcat run as daemon.
-#   4. Set service tomcat8.
+#   4. Set service tomcat.
 #   5. Enable Tomcat Manager.
 # Requirements
 #   1. environment named "JAVA_HOME".
@@ -23,9 +23,9 @@ declare -r datetime=`date +"%Y%m%d%H%M%S"`
 declare -r currentDir=`pwd`
 declare -r workDir=/tmp/$name.$datetime
 
-declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.35/bin/apache-tomcat-8.0.35.tar.gz
+declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.36/bin/apache-tomcat-8.0.36.tar.gz
 #declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-9/v9.0.0.M8/bin/apache-tomcat-9.0.0.M8.tar.gz
-#declare -r url_tomcat_src=file:///root/apache-tomcat-8.0.35.tar.gz
+#declare -r url_tomcat_src=file:///root/apache-tomcat-8.0.36.tar.gz
 declare -r tomcat_src=$(echo $url_tomcat_src | sed -e 's/^.*\///g')
 
 declare -r owner=tomcat
