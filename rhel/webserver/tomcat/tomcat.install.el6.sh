@@ -43,6 +43,8 @@ declare extracted=
 
 declare -r JAVA_HOME=${JAVA_HOME:-$(echo $(readlink -e $(which java 2>/dev/null)) | sed -e 's/\/bin\/java$//')}
 declare withAPR=
+declare withSSL=
+declare withSSLIgnoreVersion=
 
 [ -z $JAVA_HOME ] && echo "  Lost Java, install JDK first." && exit 1
 `service tomcat$ver version >/dev/null 2>&1` && echo "  tomcat$ver already exist." && exit 0
@@ -136,16 +138,28 @@ if ! ls /usr/lib64 | grep tcnative >/dev/null; then
   tar xf $tomcat_home/bin/$source -C $workDir
   if [ ! -d $workDir/$extracted ]; then echo "  extract ${source} failed."; exit 1; fi
   cd $workDir/$extracted/native
+
+  openssl_version=$(openssl version | cut -d ' ' -f 2)
+  if [ $($openssl_version | cut -d '.' -f 1) -lt 1 ]; then
+    echo "  too old OpenSSL, update first"
+    exit 1
+  elif [ $($openssl_version | cut -d '.' -f 3 | sed -e ) -lt 2 ]; then
+    withSSL="yes"
+    withSSLIgnoreVersion="--disable-openssl-version-check"
+  else
+    withSSL="/usr/include/openssl"
+  fi
+
   ./configure \
   --prefix=/usr \
   --libdir=/usr/lib64 \
   --with-java-home=$JAVA_HOME \
   --with-apr=$withAPR \
-  --with-ssl=/usr/include/openssl 1>/dev/null 2>&1 && \
+  --with-ssl=$withSSL "${withSSLIgnoreVersion}" 1>/dev/null 2>&1 && \
   make 1>/dev/null 2>&1 && \
   make install 1>/dev/null 2>&1
   cd "${currentDir}"
-  if ! ls /usr/lib64 | grep tcnative >/dev/null; then echo "  extract ${source} failed."; exit 1; fi
+  if ! ls /usr/lib64 | grep tcnative >/dev/null; then echo "  install ${source} failed."; exit 1; fi
 fi
 
 echo "  building structure ..."
@@ -614,6 +628,22 @@ if [ -r /etc/httpd/conf.d/ssl.conf ]; then
 _EOT_
   fi
 fi
+
+if ! systemctl start tomcat8 1>/dev/null 2>&1; then
+  echo "  install tomcat${ver} failed."
+  exit 1
+fi
+if ! systemctl status tomcat8 1>/dev/null 2>&1; then
+  echo "  install tomcat${ver} failed."
+  exit 1
+fi
+if ! systemctl stop tomcat8 1>/dev/null 2>&1; then
+  echo "  install tomcat${ver} failed."
+  exit 1
+fi
+
+echo "Cleanup ..."
+rm -rf $workDir
 
 echo "Done."
 exit 0
