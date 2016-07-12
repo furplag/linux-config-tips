@@ -691,15 +691,15 @@ _EOT_
 fi
 
 echo "  Testing ..."
-if ! systemctl start tomcat$ver 1>/dev/null 2>&1; then
+if ! service tomcat$ver start 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
-if ! systemctl status tomcat$ver 1>/dev/null 2>&1; then
+if ! service tomcat$ver status 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
-if ! systemctl stop tomcat$ver 1>/dev/null 2>&1; then
+if ! service tomcat$ver stop 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
