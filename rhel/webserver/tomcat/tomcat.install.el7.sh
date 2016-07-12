@@ -219,6 +219,7 @@ chown $owner:$owner /var/run/tomcat
 chmod 0775 /var/run/tomcat
 ln -s /var/run/tomcat $tomcat_home/run
 
+echo "Setting up ..."
 # manager GUI
 [ -n $tomcat_manager ] && \
 sed -i -e 's/<\/tomcat-users[^>]*>/<!-- \0 -->/' $tomcat_home/conf/tomcat-users.xml && \
@@ -235,8 +236,64 @@ cat <<_EOT_>> $tomcat_home/conf/tomcat-users.xml
 _EOT_
 
 # environments
-curl -fjkL https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/webserver/tomcat/sysconfig.tomcat$ver.conf \
--o /etc/sysconfig/tomcat$ver
+cat <<_EOT_> /etc/sysconfig/tomcat$ver
+# Service-specific configuration file for tomcat. This will be sourced by
+# the SysV init script after the global configuration file
+# /etc/tomcat$ver/tomcat$ver.conf, thus allowing values to be overridden in
+# a per-service manner.
+#
+# NEVER change the init script itself. To change values for all services make
+# your changes in /etc/tomcat$ver/tomcat$ver.conf
+#
+# To change values for a specific service make your edits here.
+# To create a new service create a link from /etc/init.d/<your new service> to
+# /etc/init.d/tomcat$ver (do not copy the init script) and make a copy of the
+# /etc/sysconfig/tomcat$ver file to /etc/sysconfig/<your new service> and change
+# the property values so the two services won't conflict. Register the new
+# service in the system as usual (see chkconfig and similars).
+#
+
+# Where your java installation lives
+#JAVA_HOME="/usr/lib/jvm/java"
+
+# Where your tomcat installation lives
+#CATALINA_BASE="${tomcat_home}"
+#CATALINA_HOME="${tomcat_home}"
+#JASPER_HOME="${tomcat_home}"
+#CATALINA_TMPDIR="/var/cache/tomcat${ver}/temp"
+
+# You can pass some parameters to java here if you wish to
+#JAVA_OPTS="-Xminf0.1 -Xmaxf0.3"
+
+# Use JAVA_OPTS to set java.library.path for libtcnative.so
+#JAVA_OPTS="-Djava.library.path=/usr/lib64"
+
+# What user should run tomcat
+#TOMCAT_USER="${owner}"
+
+# You can change your tomcat locale here
+#LANG="en_US"
+
+# Run tomcat under the Java Security Manager
+#SECURITY_MANAGER="false"
+
+# Time to wait in seconds, before killing process
+#SHUTDOWN_WAIT="30"
+
+# Whether to annoy the user with "attempting to shut down" messages or not
+#SHUTDOWN_VERBOSE="false"
+
+# Set the TOMCAT_PID location
+#CATALINA_PID="/var/run/tomcat8.pid"
+
+# Connector port is 8080 for this tomcat instance
+#CONNECTOR_PORT="8080"
+
+# If you wish to further customize your tomcat environment,
+# put your own definitions here
+# (i.e. LD_LIBRARY_PATH for some jdbc drivers)
+
+_EOT_
 chown root:$owner /etc/sysconfig/tomcat$ver
 chmod 0644 /etc/sysconfig/tomcat$ver
 
@@ -363,6 +420,7 @@ connector.port.ssl=8443
 _EOT_
 
 if [ -r /etc/httpd/conf.d/ssl.conf ]; then
+  echo "  Setting SSL ..."
   sslCert=$(grep -E "^[^\#]+SSLCertificateFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateFile //')
   sslKey=$(grep -E "^[^\#]+SSLCertificateKeyFile " /etc/httpd/conf.d/ssl.conf | sed -n -e 1p | sed -e 's/^.*SSLCertificateKeyFile //')
   
@@ -389,6 +447,7 @@ _EOT_
   fi
 fi
 
+echo "  Testing ..."
 if ! systemctl start tomcat8 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
