@@ -2,39 +2,44 @@
 
 ## TL;DR
 1. [Download Tomcat](#1-download-tomcat).
-2. [Enable Tomcat run as daemon](#2-build-commons-daemon).
-3. [Install Tomcat Native](#3-install-tomcat-native).
-4. Set tomcat as a Service.
-5. Enable Tomcat Manager.
-6. SSL setting with APR.
+1. [Enable Tomcat run as daemon](#2-build-commons-daemon).
+1. [Install Tomcat Native](#3-install-tomcat-native).
+1. Set tomcat as a Service.
+1. Enable Tomcat Manager.
+1. SSL setting with APR.
 
 ### 1. Download Tomcat
 ```bash
-## e.g.
-# curl -LO http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.36/bin/apache-tomcat-8.0.36.tar.gz
+## e.g. tomcat8
+curl -LO http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.36/bin/apache-tomcat-8.0.36.tar.gz
 ```
 
 ### 2. Build commons-daemon
 Here's a walkthrough.
+  1. Install dependency packages (automake, gcc) .
 ```bash
-## 1. Install dependency packages.
-# yum install -y automake gcc
-
-## 2. Extract tomcat-source.tar.gz .
-# tar xf apache-tomcat-[v.e.r].tar.gz
-
-## 3. Then extract commons-daemon-native.tar.gz .
-# tar xf [path-to-tomcat-source]/bin/commons-daemon-native.tar.gz
-
-## 4. Congiguration for build.
-# cd commons-daemon-[v.e.r]-native-src/unix
-# ./configure \
+yum install -y automake gcc
+```
+  2. Extract tomcat-source.tar.gz .
+```bash
+tar xf apache-tomcat-[v.e.r].tar.gz
+```
+  3. Then extract commons-daemon-native.tar.gz .
+```bash
+tar xf [path-to-tomcat-source]/bin/commons-daemon-native.tar.gz
+```
+  4. Congiguration for build.
+```bash
+cd commons-daemon-[v.e.r]-native-src/unix && \
+./configure \
   --prefix=/usr \
   --libdir=/usr/lib64 \
   --with-java=$JAVA_HOME && \
-  make
+make
+```
 
-## 5. Install.
+  5. Install.
+```bash
   mv jsvc [path-to-tomcat-source]/bin/jsvc && \
   chmod +x [path-to-tomcat-source]/bin/jsvc
 ```
