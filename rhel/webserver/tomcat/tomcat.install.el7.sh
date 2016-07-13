@@ -448,17 +448,17 @@ _EOT_
 fi
 
 echo "  Testing ..."
-if ! systemctl start tomcat8 1>/dev/null 2>&1; then
+if ! systemctl start tomcat$ver 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
 
 if ! systemctl status tomcat8 1>/dev/null 2>&1; then
-  echo "  install tomcat${ver} failed."
+  echo "  install tomcat$ver failed."
   exit 1
 fi
 
-if ! systemctl stop tomcat8 1>/dev/null 2>&1; then
+if ! systemctl stop tomcat$ver 1>/dev/null 2>&1; then
   echo "  install tomcat${ver} failed."
   exit 1
 fi
