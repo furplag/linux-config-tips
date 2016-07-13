@@ -2,11 +2,11 @@
 
 ## Getting Start
 1. [Download Tomcat](#1-download-tomcat).
-1. [Install Commons Daemon](#2-install-commons-daemon).
-1. [Install Tomcat Native](#3-install-tomcat-native).
-1. Set tomcat as a Service.
-1. Enable Tomcat Manager.
-1. SSL setting with APR.
+2. [Install Commons Daemon](#2-install-commons-daemon).
+3. [Install Tomcat Native](#3-install-tomcat-native).
+4. [Set tomcat as a Service](#4-set-tomcat-as-a-service).
+5. Enable Tomcat Manager.
+6. SSL setting with APR.
 
 ### Prerequirement
 - [ ] All commands need you are "root" or you listed in "wheel".
@@ -53,7 +53,7 @@ tar xf commons-daemon(-[v.e.r])-native(-src).tar.gz
 yum install -y automake gcc
 ```
 
-#### Congiguration for build.
+#### Configuration for build.
 ```bash
 cd commons-daemon-[v.e.r]-native-src/unix && \
 ./configure \
@@ -124,7 +124,7 @@ yum install -y openssl-devel
 ```
 [See this](../apache/README.md#1-install-openssl-102) if you need install OpenSSL 1.0.2.
 
-#### Congiguration for build.
+#### Configuration for build.
 
 Add option `--disable-openssl-version-check` if your __OpenSSL version is lower than 1.0.2__.
 ```bash
@@ -137,8 +137,10 @@ cd tomcat-native-[v.e.r]-src/native && \
   --with-ssl=/usr/include/openssl && \
 make && make install
 ```
-Tomcat Native installed in /usr/lib64/libtcnative*
+Tomcat Native installed in /usr/lib64/libtcnative* .
 
+
+### 4. Set tomcat as a Service
 
 
 
