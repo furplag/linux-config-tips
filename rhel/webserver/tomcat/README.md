@@ -234,7 +234,7 @@ chmod 0775 /var/run/tomcat
 
 ### 5. Set tomcat as a Service
 ##### create file "[/etc/sysconfig/tomcat8](sysconfig.tomcat8)" (Permission: root:tomcat 0664) .
-##### Create file "[/etc/tomcat8/tomcat8.conf](tomcat8.conf)" (Permission: tomcat:tomcat 0664) .
+##### Create file "[/etc/tomcat8/tomcat8.conf](tomcat8.conf.default)" (Permission: tomcat:tomcat 0664) .
 #### In case RHEL6 (service) .
 ##### Create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
 ##### Test.
