@@ -1,0 +1,27 @@
+# Systemd unit file for default tomcat
+# 
+# To create clones of this service:
+# DO NOTHING, use tomcat8@.service instead.
+
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=syslog.target network.target
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/tomcat8/tomcat8.conf
+Environment="NAME="
+EnvironmentFile=-/etc/sysconfig/tomcat8
+
+# replace "ExecStart" and "ExecStop" if you want tomcat runs as daemon
+# ExecStart=/usr/share/tomcat8/bin/daemon.sh start
+# ExecStop=/usr/share/tomcat8/bin/daemon.sh stop
+ExecStart=/usr/share/tomcat8/bin/startup.sh
+ExecStop=/usr/share/tomcat8/bin/shutdown.sh
+
+SuccessExitStatus=143
+User=tomcat
+Group=tomcat
+
+[Install]
+WantedBy=multi-user.target
