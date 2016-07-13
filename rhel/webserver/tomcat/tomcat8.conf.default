@@ -46,4 +46,7 @@ CATALINA_PID="/usr/share/tomcat8/run/tomcat8.pid"
 # If you wish to further customize your tomcat environment,
 # put your own definitions here
 # (i.e. LD_LIBRARY_PATH for some jdbc drivers)
-CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8 -Xms512m -Xmx1g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=1g -XX:NewSize=128m -Xloggc:/usr/share/tomcat8/logs/gc.log -XX:+PrintGCDetails -Djava.security.egd=file:/dev/./urandom"
+CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8"
+CATALINA_OPTS="-Xms512m -Xmx1g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=1g -XX:NewSize=128m"
+CATALINA_OPTS="-Xloggc:/usr/share/tomcat8/logs/gc.log -XX:+PrintGCDetails"
+CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
