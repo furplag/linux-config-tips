@@ -1,12 +1,13 @@
 # Tomcat on RHEL
 
-## Getting Start
+## TL;DR
 1. [Download Tomcat](#1-download-tomcat).
 2. [Install Commons Daemon](#2-install-commons-daemon).
 3. [Install Tomcat Native](#3-install-tomcat-native).
-4. [Set tomcat as a Service](#4-set-tomcat-as-a-service).
-5. Enable Tomcat Manager.
-6. SSL setting with APR.
+4. [Building Structure](#4-building-structure).
+5. [Set tomcat as a Service](#5-set-tomcat-as-a-service).
+6. Enable Tomcat Manager.
+7. SSL setting with APR.
 
 ### Prerequirement
 - [ ] All commands need you are "root" or you listed in "wheel".
@@ -140,9 +141,106 @@ make && make install
 Tomcat Native installed in /usr/lib64/libtcnative* .
 
 
-### 4. Set tomcat as a Service
+### 4. Building structure
+Here's a walkthrough.
+
+Situations:  
+
+* "Tomcat version" is "8.0.36" .
+
+* "Java version" is "8u92 (JAVA_HOME=/usr/java/jdk1.8.0_92)" .
+
+* "TOMCAT_HOME" is directory `/usr/share/tomcat8` .
+
+* "tomcat" run as user "tomcat" .
+
+* user "tomcat" belong to group "tomcat" .
+
+#### Set Tomcat directory.
+```bash
+mv [tomcat-source] /usr/share/tomcat8
+rm -rf /usr/share/tomcat8/{logs,temp,work}
+mkdir -p /usr/share/tomcat8/conf/Catalina/localhost
+chown root:tomcat -R /usr/share/tomcat8
+chmod 0775 -R /usr/share/tomcat8
+```
+
+#### Setting for directory "bin" .
+```bash
+rm -rf /usr/share/tomcat8/bin/*.bat
+```
+
+#### Setting for directory "conf" .
+```bash
+mv /usr/share/tomcat8/conf /etc/tomcat8
+ln -s /etc/tomcat8 /usr/share/tomcat8/conf
+```
+
+#### Setting for directory "logs" .
+```bash
+mkdir -p /var/log/tomcat8
+chown tomcat:tomcat /var/log/tomcat8
+ln -s /var/log/tomcat8 /usr/share/tomcat8/logs
+```
+
+#### Setting for directory "temp, work" .
+```bash
+mkdir -p /var/cache/tomcat8/{temp,work}
+ln -s /var/cache/tomcat8/temp /usr/share/tomcat8/temp
+ln -s /var/cache/tomcat8/work /usr/share/tomcat8/work
+```
+
+#### Setting for directory "webapps" .
+```bash
+mkdir -p /var/lib/tomcat8
+mv /usr/share/tomcat8/webapps /var/lib/tomcat8/webapps
+ln -s /var/lib/tomcat8/webapps /usr/share/tomcat8/webapps
+```
+
+#### Setting for "pidfile" .
+```bash
+mkdir -p /var/run/tomcat
+ln -s /var/run/tomcat /usr/share/tomcat8/run
+```
+
+#### Set permissions.
+```bash
+## bin
+chmod 0664 /usr/share/tomcat8/bin/*.*
+chmod +x /usr/share/tomcat8/bin/{jsvc,*.sh}
+
+## conf
+chown tomcat:tomcat /etc/tomcat8/*.*
+chmod 0664 /etc/tomcat8/*.*
+chmod 0660 /etc/tomcat8/tomcat-users.xml
+
+## logs
+chmod 0770 /var/log/tomcat8
+
+## temp, work
+chown tomcat:tomcat -R /var/cache/tomcat8
+chmod 0770 -R /var/cache/tomcat8
+
+## webapps
+chown tomcat:tomcat -R /var/lib/tomcat8
+chmod 0770 /var/lib/tomcat8
+chmod 0775 -R /var/lib/tomcat8/webapps
+
+## pid(s)
+chown tomcat:tomcat /var/run/tomcat
+chmod 0775 /var/run/tomcat
+```
 
 
+### 5. Set tomcat as a Service
+##### create file "[/etc/sysconfig/tomcat8](sysconfig.tomcat8)" (Permission: root:tomcat 0664) .
+##### Create file "[/etc/tomcat8/tomcat8.conf](tomcat8.conf)" (Permission: tomcat:tomcat 0664) .
+#### In case RHEL6 (service) .
+##### Create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
+##### Test.
+```bash
+service tomcat8 configtest && service tomcat8 start
+```
 
 ### [Install Tomcat on RHEL6](tomcat.install.el6.sh).
 
