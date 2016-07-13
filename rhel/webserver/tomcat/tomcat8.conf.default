@@ -1,0 +1,49 @@
+# System-wide configuration file for tomcat services
+# This will be loaded by systemd as an environment file,
+# so please keep the syntax.
+#
+# There are 2 "classes" of startup behavior in this package.
+# The old one, the default service named tomcat.service.
+# The new named instances are called tomcat8@instance.service.
+#
+# Use this file to change default values for all services.
+# Change the service specific ones to affect only one service.
+# For tomcat8.service it's /etc/sysconfig/tomcat8, for
+# tomcat8@instance it's /etc/sysconfig/tomcat8@instance.
+
+# In new-style instances, if CATALINA_BASE isn't specified, it will
+# be constructed by joining TOMCATS_BASE and NAME.
+TOMCATS_BASE="/usr/share/tomcat8/instances/"
+
+# Where your java installation lives
+JAVA_HOME="/usr/java/jdk1.8.0_92"
+
+# Where your tomcat installation lives
+CATALINA_HOME="/usr/share/tomcat8"
+
+# System-wide tmp
+CATALINA_TMPDIR="/usr/share/tomcat8/temp"
+
+# You can change your tomcat locale here
+LANG="en_US.UTF-8"
+
+# Run tomcat under the Java Security Manager
+SECURITY_MANAGER="false"
+
+# Time to wait in seconds, before killing process
+# TODO(stingray): does nothing, fix.
+# SHUTDOWN_WAIT="30"
+
+# Whether to annoy the user with "attempting to shut down" messages or not
+SHUTDOWN_VERBOSE="true"
+
+# Set the TOMCAT_PID location
+CATALINA_PID="/usr/share/tomcat8/run/tomcat8.pid"
+
+# Connector port is 8080 for this tomcat instance
+#CONNECTOR_PORT="8080"
+
+# If you wish to further customize your tomcat environment,
+# put your own definitions here
+# (i.e. LD_LIBRARY_PATH for some jdbc drivers)
+CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8 -Xms512m -Xmx1g -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=1g -XX:NewSize=128m -Xloggc:/usr/share/tomcat8/logs/gc.log -XX:+PrintGCDetails -Djava.security.egd=file:/dev/./urandom"
