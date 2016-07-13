@@ -11,12 +11,15 @@
 # For tomcat8.service it's /etc/sysconfig/tomcat9, for
 # tomcat9@instance it's /etc/sysconfig/tomcat9@instance.
 
+# This variable is used to figure out if config is loaded or not.
+TOMCAT_CFG_LOADED="1"
+
 # In new-style instances, if CATALINA_BASE isn't specified, it will
 # be constructed by joining TOMCATS_BASE and NAME.
 TOMCATS_BASE="/usr/share/tomcat9/instances/"
 
 # Where your java installation lives
-JAVA_HOME="/usr/java/jdk1.8.0_92"
+JAVA_HOME="/usr/java/latest"
 
 # Where your tomcat installation lives
 CATALINA_HOME="/usr/share/tomcat9"
