@@ -273,6 +273,6 @@ chmod +x tomcat.install.el6.sh
 ```bash
 curl -LO https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/webserver/tomcat/tomcat.install.el7.sh
 ## set variables you need.
-chmod +x tomcat.install.el6.sh
-./tomcat.install.el6.sh
+chmod +x tomcat.install.el7.sh
+./tomcat.install.el7.sh
 ```
