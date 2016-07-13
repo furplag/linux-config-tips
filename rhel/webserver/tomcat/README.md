@@ -194,6 +194,13 @@ ln -s /var/cache/tomcat8/temp /usr/share/tomcat8/temp
 ln -s /var/cache/tomcat8/work /usr/share/tomcat8/work
 ```
 
+### Setting for directory "instances" (in use multi instances) .
+```bash
+mkdir -p /var/lib/tomcat8s
+mv /usr/share/tomcat8/webapps /var/lib/tomcat8/webapps
+ln -s /var/lib/tomcat8s /usr/share/tomcat8/instances
+```
+
 ### Setting for directory "webapps" .
 ```bash
 mkdir -p /var/lib/tomcat8
@@ -230,6 +237,10 @@ chown tomcat:tomcat -R /var/lib/tomcat8
 chmod 0770 /var/lib/tomcat8
 chmod 0775 -R /var/lib/tomcat8/webapps
 
+## instances
+chown tomcat:tomcat /var/lib/tomcat8s
+chmod 0775 /var/lib/tomcat8s
+
 ## pid(s)
 chown tomcat:tomcat /var/run/tomcat
 chmod 0775 /var/run/tomcat
@@ -240,15 +251,28 @@ ___
 ## 5. Set tomcat as a Service
 ### Create file "[/etc/sysconfig/tomcat8](tomcat8.sysconfig)" (Permission: root:tomcat 0664) .
 ### Create file "[/etc/tomcat8/tomcat8.conf](tomcat8.conf.default)" (Permission: tomcat:tomcat 0664) .
+Remember to fix "__JAVA_HOME=[java_home_of_your_machine]__".
 ### In case RHEL6 (service), create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
-### In case RHEL7 (service), create file "[/usr/lib/systemd/system/tomcat](tomcat8.systemctl)" (Permission: root:root 0775) .
+### In case RHEL7 (systemctl),
+Create file "[/usr/lib/systemd/system/tomcat](tomcat8.systemctl)" (Permission: root:root 0775) .
 ### Test.
 ```bash
 service tomcat8 configtest && service tomcat8 start && service tomcat8 stop
 ```
 ___
 
-
+## Quickstart
 ### [Install Tomcat on RHEL6](tomcat.install.el6.sh).
-
+```bash
+curl -LO https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/webserver/tomcat/tomcat.install.el6.sh
+## set variables you need.
+chmod +x tomcat.install.el6.sh
+./tomcat.install.el6.sh
+```
 ### [Install Tomcat on RHEL7](tomcat.install.el7.sh).
+```bash
+curl -LO https://raw.githubusercontent.com/furplag/linux-config-tips/master/rhel/webserver/tomcat/tomcat.install.el7.sh
+## set variables you need.
+chmod +x tomcat.install.el6.sh
+./tomcat.install.el6.sh
+```
