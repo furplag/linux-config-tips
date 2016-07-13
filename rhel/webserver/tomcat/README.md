@@ -10,9 +10,12 @@
 7. SSL setting with APR.
 
 ## Prerequirement
-- [ ] All commands need you are "root" or you listed in "wheel".
-- [ ] Java already installed (or not, [here](../../java)) .
+- [ ] All commands need you are "root" or you listed in "wheel" .
+- [ ] Java already installed (or not, [see this](../../java)) .
 - [ ] User named "tomcat" exists.
+- [ ] Switch "permissive" SELinux.
+
+____
 
 ## 1. Download Tomcat
 ### Download from URL (http://archive.apache.org/dist/tomcat) .
@@ -254,10 +257,17 @@ ___
 Remember to fix "__JAVA_HOME=[java_home_of_your_machine]__".
 ### In case RHEL6 (service), create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
 ### In case RHEL7 (systemctl),
-Create file "[/usr/lib/systemd/system/tomcat](tomcat8.systemctl)" (Permission: root:root 0775) .
-### Test.
+Create file "[/usr/lib/systemd/system/tomcat.service](tomcat8.systemctl)" (Permission: root:root 0775) .
+Create file "/usr/lib/systemd/system/tomcat@.service" (Permission: root:root 0775) .
 ```bash
-service tomcat8 configtest && service tomcat8 start && service tomcat8 stop
+cp -p /usr/lib/systemd/system/tomcat8.service \
+/usr/lib/systemd/system/tomcat8@.service
+
+sed -i -e "s/tomcat8@/\0name/g" \
+-e 's/Environment="NAME=/\0\%I/g' \
+-e "s/EnvironmentFile=-\/etc\/sysconfig\/tomcat8/\0@\%I/g" \
+/usr/lib/systemd/system/tomcat8@.service
+chmod 644 /usr/lib/systemd/system/tomcat8@.service
 ```
 ___
 
