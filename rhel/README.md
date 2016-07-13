@@ -14,13 +14,9 @@
 * [Install Oracle JDK 7 with "alternatives"](java/jdk.7.md)
 * [Install Oracle JDK 8 with "alternatives"](java/jdk.8.md)
 
-#### [Install Apache Maven (relate $JAVA_HOME)](java/mvn.md)
+#### [Install Apache Maven (relate $JAVA_HOME)](java/README.md)
 
-#### Install Acache Tomcat
-
-* [Install Tomcat 6](java/tomcat.6.md)
-* [Install Tomcat 7](java/tomcat.7.md)
-* [Install Tomcat 8](java/tomcat.8.md)
+#### [Install Acache Tomcat](webserver/tomcat/)
 
 ## HTTP/2.0
 
