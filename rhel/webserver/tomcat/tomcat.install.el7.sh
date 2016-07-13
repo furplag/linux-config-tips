@@ -184,7 +184,7 @@ chmod 0660 /etc/tomcat$ver/tomcat-users.xml
 # logs
 [ -d /var/log/tomcat$ver ] && mv /var/log/tomcat$ver /var/log/tomcat$ver.$datetime
 mkdir -p /var/log/tomcat$ver
-chown tomcat:tomcat /var/log/tomcat$ver
+chown $owner:$owner /var/log/tomcat$ver
 chmod 0770 /var/log/tomcat$ver
 ln -s /var/log/tomcat$ver $tomcat_home/logs
 
