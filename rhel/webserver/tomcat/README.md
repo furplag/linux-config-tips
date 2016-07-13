@@ -238,10 +238,10 @@ ___
 
 
 ## 5. Set tomcat as a Service
-### create file "[/etc/sysconfig/tomcat8](sysconfig.tomcat8)" (Permission: root:tomcat 0664) .
+### Create file "[/etc/sysconfig/tomcat8](tomcat8.sysconfig)" (Permission: root:tomcat 0664) .
 ### Create file "[/etc/tomcat8/tomcat8.conf](tomcat8.conf.default)" (Permission: tomcat:tomcat 0664) .
-### In case RHEL6 (service) .
-### Create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
+### In case RHEL6 (service), create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
+### In case RHEL7 (service), create file "[/usr/lib/systemd/system/tomcat](tomcat8.systemctl)" (Permission: root:root 0775) .
 ### Test.
 ```bash
 service tomcat8 configtest && service tomcat8 start && service tomcat8 stop
