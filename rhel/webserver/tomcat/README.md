@@ -349,6 +349,23 @@ Adding Connector in conf/server.xml.
 -->
 </Connector>
 ```
+
+If https://[your-tomcat-server]/manager returns 403, Add "RemoteAddrValve" to context 
+
+as file "conf/Catalina/localhost/manager.xml" .
+
+```xml
+<Context privileged="true" antiResourceLocking="false"
+  docBase="${catalina.home}/webapps/manager">
+  <!-- allow public (DO NOT use production) . -->
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="^.*$" />
+  <!-- localhost only -->
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="172\.0\.0\.1|::1|0:0:0:0:0:0:0:1" />
+
+  <!-- allow from 192.168.124.* (VMWare NAT default) -->
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="172\.0\.0\.1|::1|0:0:0:0:0:0:0:1|192\.168\.124\.\d+" />
+</Context>
+```
 ____
 
 
