@@ -7,8 +7,10 @@
 4. [Building Structure](#4-building-structure).
 5. [Set tomcat as a Service](#5-set-tomcat-as-a-service).
 6. [Enable Tomcat Manager](#6-enable-tomcat-manager).
-7. SSL setting with APR.
-
+7. [More stuff](#7-more-stuff).
+   1. using "catalina.properties" .
+   2. Tomcat over SSL.
+   3. Enable HTTP2 Tomcat.
 ## Prerequirement
 - [ ] All commands need you are "root" or you listed in "wheel" .
 - [ ] Java already installed (or not, [see this](../../java)) .
@@ -320,6 +322,11 @@ Here's a walkthrough.
     roles="admin-gui,admin-script,manager-gui,manager-jmx,manager-script,manager-status" />
 </tomcat-users>
 ```
+____
+## 7. More stuff
+### Using "catalina.properties".
+
+
 ____
 
 
