@@ -47,7 +47,7 @@ declare withSSL=
 declare withSSLIgnoreVersion=
 
 [ -z $JAVA_HOME ] && echo "  Lost Java, install JDK first." && exit 1
-[ -e /usr/lib/systemd/system/tomcat8.service ] && echo "  tomcat$ver already exist." && exit 0
+[ -e /usr/lib/systemd/system/tomcat$ver.service ] && echo "  tomcat$ver already exist." && exit 0
 [ -d $tomcat_home ] && mv $tomcat_home $tomcat_home.saved.$datetime
 
 if ! grep -e "^${owner}" /etc/group >/dev/null; then
