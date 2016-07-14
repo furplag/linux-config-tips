@@ -10,7 +10,7 @@
 7. [More stuff](#7-more-stuff).
    1. using "catalina.properties" .
    2. Tomcat over SSL.
-   3. Enable HTTP2 Tomcat.
+
 ## Prerequirement
 - [ ] All commands need you are "root" or you listed in "wheel" .
 - [ ] Java already installed (or not, [see this](../../java)) .
@@ -40,10 +40,10 @@ ___
 
 
 ## 2. Install Commons Daemon
-Here's a walkthrough.    
-  1. Get Commons Daemon.    
-  1. build Commons-daemon as "jsvc".    
-  1. Set "jsvc" Tomcat's "bin" directory.    
+#### Overview
+1. Get Commons Daemon.    
+2. build Commons-daemon as "jsvc".    
+3. Set "jsvc" Tomcat's "bin" directory.    
 
 ### Get commons-daemon-native.
 commons-daemon-native.tar.gz is in [path-to-tomcat-source]/bin .    
@@ -80,10 +80,10 @@ ___
 
 
 ## 3. Install Tomcat Native
-#### Here's a walkthrough.    
-    1. Get Tomcat Native source.    
-    1. Build Tomcat Native.    
-    1. Install Tomcat Native Library.    
+#### Overview
+1. Get Tomcat Native source.    
+2. Build Tomcat Native.    
+3. Install Tomcat Native Library.    
 
 ### Get tomcat-native.
 tomcat-native.tar.gz is in [path-to-tomcat-source]/bin .    
@@ -325,8 +325,30 @@ Here's a walkthrough.
 ____
 ## 7. More stuff
 ### Using "catalina.properties".
-
-
+in "conf/catalina.properties"
+```properties
+server.port=8081
+```
+then modify "conf/server.xml"
+```bash
+sed -i -e 's/port="8080"/port="\${server.port}"/' [tomcat-directory]/conf/server.xml
+```
+### Tomcat over SSL with APR.
+Adding Connector in conf/server.xml.
+```xml
+<Connector
+  protocol="org.apache.coyote.http11.Http11AprProtocol"
+  port="8443" maxThreads="200"
+  scheme="https" secure="true" clientAuth="false" SSLEnabled="true"
+  SSLCertificateFile="[path-to-certificate-file]"
+  SSLCertificateKeyFile="[path-to-privatekey-file]"
+  SSLProtocol="TLSv1+TLSv1.1+TLSv1.2">
+<!-- enable HTTP/2, if you using Tomcat9. -->
+<!--
+  <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+-->
+</Connector>
+```
 ____
 
 
