@@ -6,7 +6,7 @@
 3. [Install Tomcat Native](#3-install-tomcat-native).
 4. [Building Structure](#4-building-structure).
 5. [Set tomcat as a Service](#5-set-tomcat-as-a-service).
-6. Enable Tomcat Manager.
+6. [Enable Tomcat Manager](#6-enable-tomcat-manager).
 7. SSL setting with APR.
 
 ## Prerequirement
@@ -257,8 +257,8 @@ ___
 Remember to fix "__JAVA_HOME=[java_home_of_your_machine]__".
 ### In case RHEL6 (service), create file "[/etc/rc.d/init.d/tomcat8](tomcat8.service)" (Permission: root:root 0775) .
 ### In case RHEL7 (systemctl),
-Create file "[/usr/lib/systemd/system/tomcat.service](tomcat8.systemctl)" (Permission: root:root 0775) .
-Create file "/usr/lib/systemd/system/tomcat@.service" (Permission: root:root 0775) .
+#### Create file "[/usr/lib/systemd/system/tomcat.service](tomcat8.systemctl)" (Permission: root:root 0775) .
+#### Create file "/usr/lib/systemd/system/tomcat@.service" (Permission: root:root 0775) .
 ```bash
 cp -p /usr/lib/systemd/system/tomcat8.service \
 /usr/lib/systemd/system/tomcat8@.service
@@ -270,6 +270,58 @@ sed -i -e "s/tomcat8@/\0name/g" \
 chmod 644 /usr/lib/systemd/system/tomcat8@.service
 ```
 ___
+
+
+## 6. Enable Tomcat Manager
+Here's a walkthrough.
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<tomcat-users xmlns="http://tomcat.apache.org/xml"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+  version="1.0">
+
+  <!-- for /host-manager/html/* -->
+  <role rolename="admin-gui" />
+
+  <!-- for /host-manager/text/* -->
+  <role rolename="admin-script" />
+
+  <!-- for /manager/html/* -->
+  <role rolename="manager-gui" /> 
+
+  <!-- for /manager/jmxproxy/* -->
+  <role rolename="manager-jmx" />
+
+  <!-- for /manager/text/* -->
+  <role rolename="manager-script" />
+
+  <!-- for /manager/status/* -->
+  <role rolename="manager-status" />
+
+  <!-- like a GOD. -->
+  <user username="[username]" password="[secret]" 
+    roles="admin-gui,admin-script,manager-gui,manager-jmx,manager-script,manager-status" />
+</tomcat-users>
+```
+____
+
 
 ## Quickstart
 ### [Install Tomcat on RHEL6](tomcat.install.el6.sh).
