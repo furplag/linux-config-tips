@@ -20,7 +20,7 @@ declare -r datetime=`date +"%Y%m%d%H%M%S"`
 declare -r jdkDir=/usr/java
 declare -r workDir=$jdkDir/install.log/$datetime
 declare -r baseURL=https://edelivery.oracle.com/otn-pub/java/jdk/@nameOfVer@/jdk-@ver@u@updateVer@-linux-x64.rpm
-declare -r defaultVer=8u92-b14
+declare -r defaultVer=8u121-b13
 declare -r stealth=$workDir/stealth.JDK.tar.gz
 declare -r mavenDir=/usr/maven
 declare -r mavenBaseURL=https://www.apache.org/dist/maven/maven-3/@mavenVer/binaries/
@@ -68,7 +68,7 @@ Usgae: ${name} [-v jdkVersion] [-m]
          5 : 5u22
          6 : 6u45-b06
          7 : 7u80-b15
-         8 : 8u92-b14
+         8 : 8u121-b13
        (1.)[version].0_[updateVersion](-b[build])
        [version]u[updateVersion]-b[build]
        Note : Use "u0" or ".0(_00)", if you need to install base version. 
@@ -124,7 +124,7 @@ elif [[ $verStr =~ ^(1\.)?[5-9]$ ]]; then
     5) nameOfVer=5u22;;
     6) nameOfVer=6u45-b06;;
     7) nameOfVer=7u80-b15;;
-    8) nameOfVer=8u92-b14;;
+    8) nameOfVer=8u121-b13;;
   esac
 else
   usage
