@@ -151,7 +151,11 @@ if [ -n $installVer ]; then
     downloadURL=$(echo $downloadURL | sed -e "s/@ver@u@updateVer@/$(echo $installVer | sed -e 's/\./_/g')/")
     downloadURL=$(echo $downloadURL | sed -e 's/\-x64/\-amd64/' | sed -e 's/\.rpm$/\-rpm\.bin/')
   else
-    downloadURL=$(echo $baseURL | sed -e "s/@nameOfVer@/${nameOfVer}/")
+    if [ ${nameOfVer} = ${defaultVer} ]; then
+      downloadURL=$(echo $baseURL | sed -e "s/@nameOfVer@/${nameOfVer}\/e9e7ea248e2c4826b92b3f075a80e441/")
+    else
+      downloadURL=$(echo $baseURL | sed -e "s/@nameOfVer@/${nameOfVer}/")
+    fi
     downloadURL=$(echo $downloadURL | sed -e "s/@ver@/${ver}/" | sed -e "s/@updateVer@/${updateVer}/")
     if [ $ver -eq 6 ]; then
       downloadURL=$(echo $downloadURL | sed -e 's/\.rpm$/-rpm.bin/')
