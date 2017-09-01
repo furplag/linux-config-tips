@@ -1,5 +1,5 @@
 # CentOS 7
-###### CentOS Linux release 7.2.1511 (Core)
+###### CentOS Linux release 7.3.1611 (Core)
 ## Install "Minimal Desktop" in CentOS 7
 ##### Install required packages for Using Desktop.
 ```bash
