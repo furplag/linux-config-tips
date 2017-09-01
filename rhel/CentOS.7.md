@@ -25,7 +25,7 @@ yum install -y open-vm-tools open-vm-tools-desktop
 localectl set-locale LANG=[language_Country.Charset]
 
 # change default Timezone.
-datetimectl set-timezone [zoneinfo]
+timedatectl set-timezone [zoneinfo]
 ```
 then "`shutdown -r now`".
 
