@@ -2,8 +2,8 @@
 
 ## TL;DR
 1. [install packages](#install-packages).
-2. create "mock" user.
-3. [build RPM](build-rpm).
+2. [create "mock" user](#create-mock-user).
+3. [build RPM](#build-rpm).
 
 ### Install Packages
 ```bash
