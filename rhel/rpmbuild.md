@@ -7,7 +7,7 @@
 
 ### Install Packages
 ```bash
-# yum install -y mock rpmdevtools rpm-build yum-utils
+# yum install -y mock rpmdevtools rpm-build rpm-sign yum-utils
 ```
 
 ### Create "mock" user.
