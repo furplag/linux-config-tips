@@ -28,5 +28,5 @@ add some metadatas before create VM instance .
 | Project | lang | ja_JP.UTF-8 | 
 | Project | time-zone | Asia/Tokyo | 
 | Project / Instance | ssh-port | 23456 | 
-| Instance | ssh-passphrase |(Requirement) | 
+| Instance | ssh-passphrase |(no create SSH key pair, if not specified the value of this key .) | 
 
