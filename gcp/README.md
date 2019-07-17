@@ -17,7 +17,7 @@ There is an important thing, the script is only for my own  .
         1. only use Public Key Authentication .
         1. Firewall setting (firewalld) .
         1. generate SSH key pair .
-1. And never do twice .
+1. And never do those twice .
 
 ## Prerequirement
 
@@ -28,5 +28,5 @@ add some metadatas before create VM instance .
 | Project | lang | ja_JP.UTF-8 | 
 | Project | time-zone | Asia/Tokyo | 
 | Project / Instance | ssh-port | 23456 | 
-| Instance | ssh-passphrase |(no create SSH key pair, if not specified the value of this key .) | 
+| Project / Instance | ssh-passphrase |(no create SSH key pair, if not specified the value of this key .) | 
 
