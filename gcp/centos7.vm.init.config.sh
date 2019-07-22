@@ -158,7 +158,14 @@ if [[ $(_are_we_have_to_do 'packages') ]]; then
   [ ! -e /etc/yum.repos.d/ius.repo ] && \
     yum install -y https://repo.ius.io/ius-release-el7.rpm
   [ ! -e /etc/yum.repos.d/mariadb.repo ] && \
-    curl -fsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | bash
+    cat <<_EOT_> /etc/yum.repos.d/mariadb.repo
+[mariadb]
+name = MariaDB
+baseurl = http://yum.mariadb.org/10.4/centos7-amd64
+gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+enabled=0
+gpgcheck=1
+_EOT_
   [ ! -e /etc/yum.repos.d/nginx.repo ] && \
     yum install -y http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
   [ ! -e /etc/yum.repos.d/pgdg.repo ] && \
