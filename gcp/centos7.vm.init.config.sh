@@ -3,7 +3,7 @@ set -ue -o pipefail
 export LC_ALL=C
 
 ###
-# centos.7.init.config.sh (GCP)
+# centos7.vm.init.config.sh (GCP)
 # https://github.com/furplag/linux-config-tips
 # Copyright 2019+ furplag
 # Licensed under MIT (https://github.com/furplag/linux-config-tips/blob/master/LICENSE)
