@@ -356,7 +356,7 @@ CATALINA_OPTS="-Xloggc:${tomcat_home}/logs/gc.log -XX:+PrintGCDetails"
 CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
-[ $((echo "`java -version 2>&1`") | grep "java version" | cut -d "\"" -f 2 | cut -d "." -f 2) -gt 7 ] && \
+[ $((echo "`java -version 2>&1`" | grep "java version" | cut -d "\"" -f 2 | cut -d "." -f 2)) -gt 7 ] && \
 sed -i -e 's/PermSize/MetaspaceSize/g' $tomcat_home/conf/tomcat$ver.conf
 chown $owner:$owner $tomcat_home/conf/tomcat$ver.conf
 chmod 0664 $tomcat_home/conf/tomcat$ver.conf
