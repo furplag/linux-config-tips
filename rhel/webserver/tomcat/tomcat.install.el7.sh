@@ -357,9 +357,7 @@ CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
 
-if [ $((echo "`java -version 2>&1`") | grep "java version" | cut -d "\"" -f 2 | cut -d "." -f 2) -gt 7 ]; then
-  sed -i -e 's/PermSize/MetaspaceSize/g' $tomcat_home/conf/tomcat$ver.conf
-elif [ $((echo "`java -version 2>&1`") | grep "jdk version" | cut -d "\"" -f 2 | cut -d "." -f 2) -gt 7 ]; then
+if [ $((echo "`java -version 2>&1`") | grep " version" | cut -d "\"" -f 2 | cut -d "." -f 2) -gt 7 ]; then
   sed -i -e 's/PermSize/MetaspaceSize/g' $tomcat_home/conf/tomcat$ver.conf
 fi
 
