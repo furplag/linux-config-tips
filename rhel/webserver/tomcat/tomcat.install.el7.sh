@@ -23,9 +23,10 @@ declare -r datetime=`date +"%Y%m%d%H%M%S"`
 declare -r currentDir=`pwd`
 declare -r workDir=/tmp/$name.$datetime
 
-declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.36/bin/apache-tomcat-8.0.36.tar.gz
-#declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-9/v9.0.0.M8/bin/apache-tomcat-9.0.0.M8.tar.gz
-#declare -r url_tomcat_src=file:///root/apache-tomcat-8.0.36.tar.gz
+declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-9/v9.0.37/bin/apache-tomcat-9.0.37.tar.gz
+#declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.57/bin/apache-tomcat-8.5.57.tar.gz
+#declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.53/bin/apache-tomcat-8.0.53.tar.gz
+#declare -r url_tomcat_src=http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.105/bin/apache-tomcat-7.0.105.tar.gz
 declare -r tomcat_src=$(echo $url_tomcat_src | sed -e 's/^.*\///g')
 
 declare -r owner=tomcat
@@ -284,7 +285,7 @@ cat <<_EOT_> /etc/sysconfig/tomcat$ver
 #SHUTDOWN_VERBOSE="false"
 
 # Set the TOMCAT_PID location
-#CATALINA_PID="/var/run/tomcat8.pid"
+#CATALINA_PID="/var/run/tomcat${ver}.pid"
 
 # Connector port is 8080 for this tomcat instance
 #CONNECTOR_PORT="8080"
@@ -453,7 +454,7 @@ if ! systemctl start tomcat$ver 1>/dev/null 2>&1; then
   exit 1
 fi
 
-if ! systemctl status tomcat8 1>/dev/null 2>&1; then
+if ! systemctl status tomcat$ver 1>/dev/null 2>&1; then
   echo "  install tomcat$ver failed."
   exit 1
 fi
