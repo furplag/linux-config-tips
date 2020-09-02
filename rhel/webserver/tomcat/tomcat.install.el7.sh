@@ -351,9 +351,9 @@ CATALINA_PID="${tomcat_home}/run/tomcat${ver}.pid"
 # put your own definitions here
 # (i.e. LD_LIBRARY_PATH for some jdbc drivers)
 CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8"
-CATALINA_OPTS="-Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m"
-CATALINA_OPTS="-Xloggc:${tomcat_home}/logs/gc.log -XX:+PrintGCDetails"
-CATALINA_OPTS="-Djava.security.egd=file:/dev/./urandom"
+CATALINA_OPTS="${CATALINA_OPTS} -Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m"
+CATALINA_OPTS="${CATALINA_OPTS} -Xloggc:${tomcat_home}/logs/gc.log -XX:+PrintGCDetails"
+CATALINA_OPTS="${CATALINA_OPTS} -Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
 
@@ -410,6 +410,7 @@ sed -i -e "s/Server port=\"8005\"/Server port=\"\${server.port.shutdown}\"/g" \
 -e "s/Connector port=\"8009\"/Connector port=\"\${connector.port.ajp}\"/g" \
 -e "s/redirectPort=\"8443\"/redirectPort=\"\${connector.port.redirect}\"/g" \
 -e "s/Connector port=\"8443\"/Connector port=\"\${connector.port.ssl}\"/g" \
+-e "s/ address=\"\*\"/ address=\"\${connector.ajp.allow.address}\" secretRequired=\"\${connector.ajp.secret}\"/g" \
 $tomcat_home/conf/server.xml
 
 cat <<_EOT_>> $tomcat_home/conf/catalina.properties
@@ -420,7 +421,8 @@ connector.port=8080
 connector.port.ajp=8009
 connector.port.redirect=8443
 connector.port.ssl=8443
-
+connector.ajp.allow.address=*
+connector.ajp.secret=false
 _EOT_
 
 if [ -r /etc/httpd/conf.d/ssl.conf ]; then
