@@ -350,10 +350,7 @@ CATALINA_PID="${tomcat_home}/run/tomcat${ver}.pid"
 # If you wish to further customize your tomcat environment,
 # put your own definitions here
 # (i.e. LD_LIBRARY_PATH for some jdbc drivers)
-CATALINA_OPTS="-server -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8"
-CATALINA_OPTS="${CATALINA_OPTS} -Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m"
-CATALINA_OPTS="${CATALINA_OPTS} -Xloggc:${tomcat_home}/logs/gc.log -XX:+PrintGCDetails"
-CATALINA_OPTS="${CATALINA_OPTS} -Djava.security.egd=file:/dev/./urandom"
+CATALINA_OPTS="-Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8 -Xms512m -Xmx1g -XX:PermSize=256m -XX:MaxPermSize=1g -XX:NewSize=128m -Xloggc:${tomcat_home}/logs/gc.log -XX:+PrintGCDetails -Djava.security.egd=file:/dev/./urandom"
 
 _EOT_
 
