@@ -17,8 +17,6 @@
 
 7. [Throuble shooting](#throuble-shooting)
 
-8. [テスト](#南無阿弥陀仏)
-
 ----
 
 ### Downloading Oracle JDK only use command-line.
@@ -163,6 +161,3 @@ and continuing **[next](#install-alternatives-for-jdk)**.
 
 ### Could install another version of JDK 8?
 [Use this](jdk.install.sh).
-
-### 南無阿弥陀仏
-南無阿弥陀仏
