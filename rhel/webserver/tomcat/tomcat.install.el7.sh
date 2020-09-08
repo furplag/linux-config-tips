@@ -402,12 +402,12 @@ sed -i -e "s/tomcat${ver}@/\0name/g" \
 /usr/lib/systemd/system/tomcat$ver@.service
 chmod 644 /usr/lib/systemd/system/tomcat$ver@.service
 
-sed -i -e "s/Server port=\"8005\"/Server port=\"\${server.port.shutdown}\"/g" \
--e "s/Connector port=\"8080\"/Connector port=\"\${connector.port}\"/g" \
--e "s/Connector port=\"8009\"/Connector port=\"\${connector.port.ajp}\"/g" \
+sed -i -e "s/ port=\"8005\"/ port=\"\${server.port.shutdown}\"/g" \
+-e "s/ port=\"8080\"/ port=\"\${connector.port}\"/g" \
+-e "s/ port=\"8009\"/ port=\"\${connector.port.ajp}\"/g" \
 -e "s/redirectPort=\"8443\"/redirectPort=\"\${connector.port.redirect}\"/g" \
--e "s/Connector port=\"8443\"/Connector port=\"\${connector.port.ssl}\"/g" \
--e "s/ address=\"\*\"/ address=\"\${connector.ajp.allow.address}\" secretRequired=\"\${connector.ajp.secret}\"/g" \
+-e "s/ port=\"8443\"/ port=\"\${connector.port.ssl}\"/g" \
+-e "s/ address=\".*\"/ address=\"\${connector.ajp.allow.address}\" secretRequired=\"\${connector.ajp.secret}\"/g" \
 $tomcat_home/conf/server.xml
 
 cat <<_EOT_>> $tomcat_home/conf/catalina.properties
